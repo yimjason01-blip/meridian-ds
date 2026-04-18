@@ -186,16 +186,28 @@ function EmptyState() {
 function mockAnswer(q: string, anchorLabel?: string): string {
   const subject = anchorLabel ?? "this patient";
   const lower = q.toLowerCase();
-  if (lower.includes("walk") || lower.includes("story") || lower.includes("summary")) {
-    return `${subject}: CKD tier T2 driven by eGFR slope (-18% / 14 mo) and rising UACR (32 → 108). BP control at target (128/76) is the strongest modifiable lever per the model. CV tier T2 is secondary — coupled to metabolic.`;
+  if (lower.includes("rank") || lower.includes("priori") || lower.includes("order") || lower.includes("cost")) {
+    return `If cost-to-impact is the constraint, I'd re-rank: 1) Pancreatic MRCP (high impact, surveillance-only cost), 2) Statin step-up (cheap, high yield), 3) CGM trial (moderate cost, informs #4). GLP-1 drops to #6; highest cost per unit impact at this stage.`;
   }
-  if (lower.includes("rank") || lower.includes("priori") || lower.includes("order")) {
-    return `Re-ranked by cost-to-impact ratio: 1) ACEi titration (high impact, low cost), 2) UACR q3mo monitoring (diagnostic, low cost), 3) Nephrology referral (high cost, deferred if ACEi response at 8wk is adequate).`;
+  if (lower.includes("missing") || lower.includes("gap")) {
+    return `Gaps vs. risk profile: no colorectal surveillance plan (age 52, ATM carrier — consider colonoscopy interval review), no thyroid screen (autoimmune risk with peri-menopause), and no cardiac calcium score despite ApoB 132 × 18 mo. Want me to draft candidates for these?`;
   }
   if (lower.includes("draft") || lower.includes("patient")) {
-    return `"Your kidney numbers have shifted in a direction we want to address now, not wait on. Two steps: adjust a BP medication you're already on, and recheck a urine test in 3 months. We'll revisit at the next visit."`;
+    return `"Three priorities we're locking in today: (1) a one-time pancreatic MRI because of your ATM result and your dad's history, (2) a step-up on the cholesterol medication you're on, and (3) starting a weekly injection to help with the blood-sugar trend we've been watching. We'll recheck labs in 12 weeks."`;
   }
-  return `On ${subject}: the relevant drivers are eGFR slope, UACR, and BP control. The model weights BP control highest for 5-year horizon. Want the driver stack or evidence bundle?`;
+  if (lower.includes("defer") || lower.includes("break") || lower.includes("wait")) {
+    return `Deferring the top action 60 days: if #1 is the MRCP, low incremental risk at 60 d (surveillance window tolerates it). If #1 is the statin step-up, ApoB stays ~132 — adds ~0.4% to 10-yr CV risk. Deferring both past 90 days moves the care plan out of guideline-concordant range.`;
+  }
+  if (lower.includes("why")) {
+    return `${subject} is in the queue because the model weights it as one of the highest preventable-risk deltas at 12 months for this patient's driver stack. Top contributors are ATM heterozygous status, ApoB 132 on treatment, and HOMA-IR 4.2 trajectory.`;
+  }
+  if (lower.includes("alternative") || lower.includes("instead")) {
+    return `Alternatives to ${subject}: if first-line is contraindicated or declined, the model surfaces step-therapy options scored by same-mechanism efficacy. For statin intolerance: ezetimibe mono → bempedoic acid → PCSK9 inhibitor. For GLP-1: tirzepatide, or lifestyle-only with CGM-guided iteration.`;
+  }
+  if (lower.includes("evidence") || lower.includes("study") || lower.includes("source")) {
+    return `Threshold for ${subject} derives from the cited guidelines and Meridian's cohort calibration (n=48,200). AUC on this subgroup is 0.82 at 5-year horizon. Full evidence bundle with study-by-study pull is one click away.`;
+  }
+  return `On ${subject}: the relevant inputs are the patient's current driver stack (ATM carrier, lipid profile, metabolic trajectory) and the goal horizon (12 mo preventable risk). Want the driver decomposition or the evidence bundle?`;
 }
 
 function sourceFor(anchorLabel?: string): string {

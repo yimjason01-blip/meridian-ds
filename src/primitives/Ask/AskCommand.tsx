@@ -29,10 +29,10 @@ export function AskCommand() {
   if (!commandOpen) return null;
 
   const suggestions = [
-    "Walk me through this patient's cardiovascular story",
-    "Re-rank the plan if cost is the primary constraint",
-    "What breaks if I defer the top action 60 days?",
-    "Draft the patient-facing version of the plan",
+    "Re-rank these actions by cost-to-impact ratio",
+    "What's missing from this plan given Maya's risk profile?",
+    "Draft the patient-facing version of the top 3",
+    "What breaks if I defer action 1 by 60 days?",
   ];
 
   const submit = (text: string) => {

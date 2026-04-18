@@ -20,6 +20,8 @@ export interface ReorderableItem {
   title: string;
   meta?: string[];
   disabled?: boolean;
+  /** Optional action node rendered to the right of meta (e.g. an Ask chip). */
+  rowAction?: React.ReactNode;
   body: React.ReactNode;
 }
 
@@ -249,6 +251,17 @@ export function ReorderableList({
                   </span>
                 )}
               </button>
+
+              {/* Row action (e.g. Ask chip). Click does not expand. */}
+              {item.rowAction && (
+                <div
+                  className="flex-shrink-0"
+                  onClick={(e) => e.stopPropagation()}
+                  onPointerDown={(e) => e.stopPropagation()}
+                >
+                  {item.rowAction}
+                </div>
+              )}
 
               {/* Caret */}
               <button

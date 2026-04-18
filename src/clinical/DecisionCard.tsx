@@ -36,6 +36,8 @@ export interface DecisionCardProps {
   evidence?: string;
   /** Optional override labels. Default: DO / WHY / GOAL. Keep them 2–4 chars. */
   labels?: { do?: string; why?: string; goal?: string };
+  /** Optional node rendered on the right of the evidence footer (e.g. an Ask trigger). */
+  evidenceAction?: React.ReactNode;
   className?: string;
   /** Optional status tone — applies a subtle left border marker only. */
   tone?: "default" | "urgent";
@@ -49,6 +51,7 @@ export function DecisionCard({
   evidence,
   labels = {},
   tone = "default",
+  evidenceAction,
   className,
 }: DecisionCardProps) {
   const L = { do: labels.do ?? "Do", why: labels.why ?? "Why", goal: labels.goal ?? "Goal" };
@@ -76,10 +79,11 @@ export function DecisionCard({
       </div>
 
       {evidence && (
-        <footer className="px-4 py-2 border-t border-border-subtle">
-          <div className="t-meta truncate" title={evidence}>
+        <footer className="px-4 py-2 border-t border-border-subtle flex items-center justify-between gap-3">
+          <div className="t-meta truncate min-w-0" title={evidence}>
             {evidence}
           </div>
+          {evidenceAction && <div className="flex-shrink-0">{evidenceAction}</div>}
         </footer>
       )}
     </article>

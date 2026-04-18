@@ -5,12 +5,21 @@ import { CarePlan } from "./CarePlan";
 import { RiskModels } from "./RiskModels";
 import { EMR } from "./EMR";
 import { patient } from "./data";
+import { AskProvider, AskInline, AskPane, AskCommand } from "../primitives/Ask";
 
 export function App() {
+  return (
+    <AskProvider>
+      <AppShell />
+    </AskProvider>
+  );
+}
+
+function AppShell() {
   const [section, setSection] = useState("care-plan");
 
   return (
-    <div className="min-h-screen bg-bg text-text">
+    <div className="min-h-screen bg-bg text-text flex flex-col">
       <header className="border-b border-border-subtle bg-bg/90 backdrop-blur sticky top-0 z-10">
         <div className="max-w-[1200px] mx-auto px-6 py-3 flex items-center justify-between">
           <div className="flex items-baseline gap-2">
@@ -62,11 +71,21 @@ export function App() {
         medsAllergies={{ meds: patient.meds.active, allergies: patient.meds.allergies }}
       />
 
-      <main className="max-w-[1200px] mx-auto px-6 py-8">
-        {section === "care-plan"   && <CarePlan />}
-        {section === "risk-models" && <RiskModels />}
-        {section === "emr"         && <EMR />}
-      </main>
+      {/* Canvas + AskPane as flex siblings. Pane never overlays. */}
+      <div className="flex-1 flex min-h-0">
+        <main className="flex-1 min-w-0 overflow-y-auto">
+          <div className="max-w-[1200px] mx-auto px-6 py-8">
+            {section === "care-plan"   && <CarePlan />}
+            {section === "risk-models" && <RiskModels />}
+            {section === "emr"         && <EMR />}
+          </div>
+        </main>
+        <AskPane widthPx={400} />
+      </div>
+
+      {/* Overlays — live at app level */}
+      <AskCommand />
+      <AskInline />
     </div>
   );
 }

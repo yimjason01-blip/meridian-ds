@@ -2,6 +2,7 @@ import * as React from "react";
 import { DecisionCard } from "../clinical/DecisionCard";
 import { ReorderableList, type ReorderableItem } from "../primitives/ReorderableCard";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../primitives/Tabs";
+import { AskTrigger, useAsk } from "../primitives/Ask";
 import { patient } from "./data";
 import { cn } from "../lib/cn";
 
@@ -31,6 +32,7 @@ export function CarePlan() {
     (patient.actions as Action[]).map((a) => ({ ...a, author: "meridian" }))
   );
   const [tab, setTab] = React.useState("all");
+  const { openPane } = useAsk();
 
   const reorder = (from: number, to: number) => {
     setActions((prev) => {
@@ -54,9 +56,27 @@ export function CarePlan() {
             Arrange the top candidates in <span className="text-text">All</span>. The top three surface in <span className="text-text">Top 3</span>.
           </p>
         </div>
-        <span className="t-meta text-text-muted tabular-nums">
-          {actions.length} candidates
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="t-meta text-text-muted tabular-nums">
+            {actions.length} candidates
+          </span>
+          <button
+            onClick={() =>
+              openPane({
+                query: "Walk me through this care plan — rank rationale and what's missing.",
+                anchor: { label: "this care plan" },
+              })
+            }
+            className={cn(
+              "inline-flex items-center gap-1.5 px-2 py-1 rounded-sm border border-border",
+              "text-[12px] text-text-muted hover:text-text-secondary hover:border-border-strong",
+              "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-border-strong"
+            )}
+            title="Open Ask pane with plan-level context"
+          >
+            <SparkleIcon /> Ask about this plan
+          </button>
+        </div>
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>
@@ -78,6 +98,14 @@ export function CarePlan() {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+function SparkleIcon() {
+  return (
+    <svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor" aria-hidden>
+      <path d="M6 0.5 L7 4.5 L11 5.5 L7 6.5 L6 10.5 L5 6.5 L1 5.5 L5 4.5 Z" opacity=".9" />
+    </svg>
   );
 }
 
@@ -144,6 +172,7 @@ function AllPane({
     id: `action-${i}-${a.do.slice(0, 28)}`,
     title: a.do,
     meta: metaFor(a),
+    rowAction: <AskTrigger label={a.do} kind="action" />,
     body: (
       <DecisionCard
         do={a.do}
@@ -151,6 +180,13 @@ function AllPane({
         goal={a.goal}
         evidence={a.evidence}
         tone={a.tone}
+        evidenceAction={
+          <AskTrigger
+            label={a.evidence || `evidence for: ${a.do}`}
+            kind="evidence"
+            variant="link"
+          />
+        }
         className="!rounded-none !border-0"
       />
     ),
