@@ -171,6 +171,41 @@ export const patient = {
       goal: "Deep sleep ≥ 20%, HRV ≥ 55 ms by Aug 2026",
       evidence: "AASM · CBT-I consensus",
     },
+    {
+      kicker: "Action 06 · Cardiovascular",
+      do: "Add ezetimibe 10 mg qHS if ApoB not at goal on rosuva at 12 wk",
+      why: "Second-line LDL-lowering. Additive 15-20% ApoB reduction. Prepares ground for PCSK9 if needed.",
+      goal: "Conditional trigger: ApoB > 90 at 12-wk recheck",
+      evidence: "IMPROVE-IT · ACC/AHA 2019",
+    },
+    {
+      kicker: "Action 07 · Lp(a)",
+      do: "Counsel on Lp(a) 78 nmol/L as lifelong CV risk factor; consider family cascade testing",
+      why: "Lp(a) is genetic, non-modifiable, independent of LDL. Affects familial risk stratification.",
+      goal: "Patient + first-degree relatives informed by Jul 2026",
+      evidence: "ESC Lp(a) Consensus 2022 · NHLBI",
+    },
+    {
+      kicker: "Action 08 · Metabolic",
+      do: "CGM 14-day trial to characterize postprandial glucose excursions",
+      why: "HOMA-IR 4.2 + A1c 5.8 + rising HOMA-IR trend. CGM data refines GLP-1 vs lifestyle decision.",
+      goal: "Data return by May 2026; review at visit",
+      evidence: "ADA 2024 · Hall et al. 2023",
+    },
+    {
+      kicker: "Action 09 · Hereditary surveillance",
+      do: "Refer to genetic counseling for cascade testing discussion (father, siblings, daughter)",
+      why: "ATM pathogenic variant. First-degree relatives 50% carriers. Cascade testing indicated.",
+      goal: "Referral placed by Jun 2026; counseling complete by Sep 2026",
+      evidence: "NCCN Genetic/Familial v2.2025 · ACMG",
+    },
+    {
+      kicker: "Action 10 · Bone health",
+      do: "Baseline DEXA — no prior scan, peri-menopausal transition",
+      why: "Age 52, ATM (radiation sensitivity informs surveillance imaging), low-dose statin, no baseline.",
+      goal: "DEXA complete by Aug 2026",
+      evidence: "USPSTF 2025 · ISCD",
+    },
   ],
 };
 
