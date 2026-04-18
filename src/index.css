@@ -1,0 +1,76 @@
+/* Meridian Design System — canonical CSS variables
+ * Source: src/tokens/tokens.json (DTCG)
+ * Do not edit values here by hand; edit tokens.json and regenerate.
+ */
+@import url("https://rsms.me/inter/inter.css");
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Surfaces — solid ladder, each tier clearly lifted (≥1.12:1 adjacent) */
+  --bg:           #08090a;
+  --bg-panel:     #17181b;
+  --bg-surface:   #24262a;
+  --bg-hover:     #30333a;
+
+  /* Text (AAA on --bg-panel, not just --bg) */
+  --text:           #f7f8f8;
+  --text-secondary: #d0d6e0;
+  --text-muted:     #a8adb7;
+
+  /* Accent */
+  --accent:         #5e6ad2;
+  --accent-hover:   #7170ff;
+  --accent-bright:  #828fff;
+  --accent-light:   rgba(113,112,255,0.08);
+  --accent-tint:    rgba(113,112,255,0.12);
+
+  /* Status (data-viz only) */
+  --status-ok:         #27a644;
+  --status-ok-bright:  #10b981;
+  --status-warn:       #e09b2d;
+  --status-crit:       #e8604c;
+
+  /* Borders — solid hex, strong enough to read on canvas */
+  --border-subtle: #24262a;
+  --border:        #35383e;
+  --border-strong: #42464d;
+
+  /* Typography */
+  --font-sans: "InterVariable", "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  color-scheme: dark;
+}
+
+@layer base {
+  html, body, #root {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-feature-settings: "cv01", "ss03";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Typographic role classes — prefer these over raw size classes */
+  .t-display { font: 510 48px/1.1  var(--font-sans); letter-spacing: -1.056px; color: var(--text); }
+  .t-h1      { font: 510 32px/1.2  var(--font-sans); letter-spacing: -0.704px; color: var(--text); }
+  .t-h2      { font: 510 24px/1.3  var(--font-sans); letter-spacing: -0.288px; color: var(--text); }
+  .t-h3      { font: 590 20px/1.35 var(--font-sans); letter-spacing: -0.240px; color: var(--text); }
+  .t-body-lg { font: 400 18px/1.5  var(--font-sans); letter-spacing: -0.165px; color: var(--text-secondary); }
+  .t-body    { font: 400 15px/1.5  var(--font-sans); letter-spacing: -0.165px; color: var(--text-secondary); }
+  .t-ui      { font: 510 13px/1.4  var(--font-sans); letter-spacing: -0.130px; color: var(--text); }
+  .t-caption { font: 510 12px/1.35 var(--font-sans);                          color: var(--text-muted); }
+  .t-label   { font: 510 12px/1.35 var(--font-sans); letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-muted); }
+  .t-meta    { font: 510 12px/1.35 var(--font-sans); color: var(--text-muted); }
+  .t-mono    { font: 400 13px/1.4  var(--font-mono); font-variant-numeric: tabular-nums; color: var(--text); }
+}
+
+@layer components {
+  /* Focus ring — single source of truth */
+  .ring-focus { outline: 2px solid var(--accent-hover); outline-offset: 2px; }
+}
