@@ -1,4 +1,4 @@
-# AGENTS.md — Meridian Design System
+# AGENTS.md — Meridian MD Design System
 
 **Read this before generating any UI for Meridian.** This file is the front-loader for every AI session (Claude, Cursor, v0, Codex, OpenCode).
 

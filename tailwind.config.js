@@ -1,5 +1,5 @@
 /** @type {import('tailwindcss').Config} */
-// Meridian Design System — Tailwind config
+// Meridian MD Design System — Tailwind config
 // Tokens mirror src/tokens/tokens.json (DTCG). CSS vars live in src/index.css.
 // Do not add colors here directly; edit tokens.json and regenerate via scripts/build-tokens.mjs
 export default {

@@ -1,6 +1,6 @@
-# Meridian Design System
+# Meridian MD Design System
 
-Source of truth for the Meridian Physician web app (and, later, any Meridian surface).
+Source of truth for the Meridian MD physician web app (and, later, any Meridian surface).
 
 ## What's in here
 

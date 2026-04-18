@@ -14,8 +14,28 @@ export function App() {
       <header className="border-b border-border-subtle bg-bg/90 backdrop-blur sticky top-0 z-10">
         <div className="max-w-[1200px] mx-auto px-6 py-3 flex items-center justify-between">
           <div className="flex items-baseline gap-2">
-            <span className="text-[17px]" style={{ fontWeight: 400, color: "var(--text-muted)" }}>Meridian</span>
-            <span className="text-[17px]" style={{ fontWeight: 590, color: "var(--text)" }}>MD</span>
+            <span
+              style={{
+                fontSize: 20,
+                fontWeight: 400,
+                letterSpacing: "-0.03em",
+                color: "var(--text-secondary)",
+                lineHeight: 1.08,
+              }}
+            >
+              Meridian
+            </span>
+            <span
+              style={{
+                fontSize: 20,
+                fontWeight: 510,
+                letterSpacing: "-0.02em",
+                color: "var(--text)",
+                lineHeight: 1.08,
+              }}
+            >
+              MD
+            </span>
           </div>
           <SegmentedControl
             value={section}
