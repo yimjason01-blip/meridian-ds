@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Sparkles } from "lucide-react";
 import { cn } from "../../lib/cn";
 import { useAsk } from "./AskProvider";
 
@@ -55,16 +56,7 @@ export function AskLauncher({
         className
       )}
     >
-      <SparkleIcon />
+      <Sparkles size={18} strokeWidth={2} />
     </button>
-  );
-}
-
-function SparkleIcon() {
-  // Same 4-point star path used by AskTrigger / AskCommand, sized for the FAB.
-  return (
-    <svg width="16" height="16" viewBox="0 0 12 12" fill="currentColor" aria-hidden>
-      <path d="M6 0.75 L7.15 4.85 L11.25 6 L7.15 7.15 L6 11.25 L4.85 7.15 L0.75 6 L4.85 4.85 Z" />
-    </svg>
   );
 }

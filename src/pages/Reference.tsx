@@ -38,7 +38,7 @@ export default function Reference() {
         <ClinicalSection />
       </main>
       <footer className="max-w-[1200px] mx-auto px-6 py-10 border-t border-border-subtle mt-16">
-        <div className="t-meta">Meridian MD DS v1.4.1 · Locked 2026-04-18 · tokens.json is source of truth</div>
+        <div className="t-meta">Meridian MD DS v1.4.2 · Locked 2026-04-18 · tokens.json is source of truth</div>
       </footer>
     </div>
   );
@@ -73,7 +73,7 @@ function Header() {
           </span>
           <span className="t-ui text-text-muted ml-3">Design System</span>
         </div>
-        <span className="t-meta">v1.4.1 · dark-only · Linear-native · shadcn/Radix primitives</span>
+        <span className="t-meta">v1.4.2 · dark-only · Linear-native · shadcn/Radix primitives</span>
       </div>
     </header>
   );
@@ -497,7 +497,7 @@ function PrimitivesSection() {
 
 function StateMatrixSection() {
   return (
-    <Section n="11" title="State Matrix" rule="Every interactive component must handle default / hover / focus / active / disabled / loading / empty / error. Empty and loading are the most skipped.">
+    <Section n="11" title="Component States" rule="Every interactive component must handle default / hover / focus / active / disabled / loading / empty / error. Empty and loading are the most skipped.">
       <div className="grid grid-cols-3 gap-3">
         <StateDemo label="Default"><Button variant="primary">Sign order</Button></StateDemo>
         <StateDemo label="Hover (simulated)"><Button variant="primary" className="bg-accent-hover">Sign order</Button></StateDemo>
@@ -581,7 +581,7 @@ function ClinicalSection() {
           <div className="t-label mb-2">PatientBanner</div>
           <div className="rounded-card overflow-hidden border border-border">
             <PatientBanner
-              identity={{ name: "Chen, Maya K.", mrn: "MRN 0041829", dob: "Jul 11 1973", age: 52, sex: "F" }}
+              identity={{ name: "Chen, Maya K.", mrn: "0041829", dob: "Jul 11 1973", age: 52, sex: "F" }}
               vitals={{ weight: "68.4 kg", bmi: "24.1", bp: "124/78", hr: "62" }}
               problems={["ATM heterozygous (pathogenic)", "Hyperlipidemia", "Pre-diabetes (A1c 5.8)"]}
               medsAllergies={{
@@ -615,7 +615,7 @@ function ClinicalSection() {
             drivers={[
               { label: "ApoB 132 mg/dL",       weight: "HR 1.42", contribution: "+3.8%" },
               { label: "Lp(a) 78 nmol/L",      weight: "HR 1.24", contribution: "+2.1%" },
-              { label: "Systolic BP 128 mmHg", weight: "HR 1.18", contribution: "+1.4%" },
+              { label: "Systolic BP 124 mmHg", weight: "HR 1.12", contribution: "+1.0%" },
               { label: "Pre-diabetes A1c 5.8", weight: "HR 1.12", contribution: "+0.9%" },
             ]}
             evidence="PREVENT (AHA 2023) · ACC/AHA 2019 · ESC 2021"
@@ -628,8 +628,8 @@ function ClinicalSection() {
           <div className="grid grid-cols-2 gap-3">
             <DecisionCard
               kicker="Action 01 · Cardiovascular"
-              do="Rosuvastatin 10 mg qHS"
-              why="ApoB 132 + Lp(a) 78 → 10-yr ASCVD 14.2%. Statin is first-line."
+              do="Intensify statin: atorva 20 → rosuva 10 mg qHS"
+              why="ApoB 132 (on atorva 20) + Lp(a) 78 → 10-yr ASCVD 14.2%. Switch to higher-potency statin."
               goal="ApoB < 90 mg/dL by Oct 2026"
               evidence="PREVENT (AHA 2023) · ACC/AHA 2019"
             />
@@ -791,20 +791,28 @@ function RC_States() {
             </div>
             {/* AFTER — mid-drag */}
             <div>
-              <div className="t-meta mb-2">during drag — ghost slot + siblings shifted up · lifted card floats</div>
-              <div className="relative flex flex-col gap-1.5 p-4 rounded-card border border-border-subtle bg-white/[.01] min-h-[260px]">
-                {/* ghost slot where dragged item originated */}
-                <div className="opacity-30 border border-dashed border-border rounded-card h-[60px] flex items-center justify-center text-text-muted text-[12px] tracking-wide">
-                  ghost slot
+              <div className="t-meta mb-2">during drag — list closes the gap · lifted card detaches</div>
+              <div className="grid grid-cols-[1fr_auto] gap-4 items-start">
+                {/* list with ghost slot + shifted siblings */}
+                <div className="flex flex-col gap-1.5 p-4 rounded-card border border-border-subtle bg-white/[.01]">
+                  <div className="opacity-40 border border-dashed border-border rounded-card h-[60px] flex items-center justify-center text-text-muted text-[12px] tracking-wide">
+                    ghost slot
+                  </div>
+                  {demo()}
+                  {demo()}
                 </div>
-                {/* siblings that translated up to close the gap */}
-                {demo()}
-                {demo()}
-                {/* lifted / dragged card — offset well clear of siblings */}
-                <div
-                  className="absolute right-[-20px] top-[88px] w-[92%] shadow-[0_16px_40px_rgba(0,0,0,0.6)] pointer-events-none rotate-[0.6deg]"
-                >
-                  {demo("", { dragging: true })}
+                {/* lifted card — detached, beside the list, tilted */}
+                <div className="pt-[76px] w-[220px]">
+                  <div className="t-meta mb-1.5 text-center">lifted</div>
+                  <div className="shadow-[0_16px_40px_rgba(0,0,0,0.6)] rotate-[1.5deg]">
+                    <article className="bg-white/[.04] border border-border rounded-card overflow-hidden">
+                      <div className="flex items-center h-[60px] px-2 gap-2">
+                        <div className="flex items-center justify-center w-5 h-10 text-text-muted"><Grip /></div>
+                        <span className="t-mono text-[13px] text-text w-5 tabular-nums text-right">02</span>
+                        <span className="truncate text-[13px] font-[510] text-text flex-1">Order pancreatic MRCP</span>
+                      </div>
+                    </article>
+                  </div>
                 </div>
               </div>
             </div>
