@@ -739,9 +739,9 @@ function RC_States() {
   const demo = (extraClass = "", opts?: { dragging?: boolean; focus?: boolean; disabled?: boolean; expanded?: boolean }) => (
     <article
       className={cn(
-        "bg-white/[.02] border border-border rounded-card overflow-hidden transition-colors",
-        opts?.dragging && "opacity-[0.92] shadow-[0_8px_24px_rgba(0,0,0,0.4)] -translate-y-0.5",
-        opts?.focus && "ring-2 ring-accent-hover",
+        "bg-white/[.02] border border-border rounded-card overflow-hidden",
+        opts?.dragging && "shadow-[0_8px_24px_rgba(0,0,0,0.4)]",
+        opts?.focus && "ring-1 ring-[var(--border-strong)]",
         opts?.disabled && "opacity-55",
         extraClass
       )}
@@ -771,16 +771,16 @@ function RC_States() {
             {demo("!bg-transparent")}
           </div>
         </StateCell>
-        <StateCell label="focus" note="2 px accent ring on grip row">{demo("", { focus: true })}</StateCell>
-        <StateCell label="grabbing" note="shadow + translateY(-2) + opacity 0.92">{demo("", { dragging: true })}</StateCell>
+        <StateCell label="focus" note="1 px neutral ring on grip">{demo("", { focus: true })}</StateCell>
+        <StateCell label="grabbing" note="card translates with cursor; shadow for lift (no accent, no opacity)">{demo("", { dragging: true })}</StateCell>
         <StateCell label="expanded" note="accordion inline, 180 ms">{demo("", { expanded: true })}</StateCell>
         <StateCell label="disabled" note="grip not draggable; opacity 0.55">{demo("", { disabled: true })}</StateCell>
 
-        <StateCell label="drop-target-above" note="2 px accent line BETWEEN siblings" className="col-span-2">
-          <div className="flex flex-col gap-0">
-            {demo("mb-0", {})}
-            <div className="h-0.5 bg-accent-hover rounded-full my-1" aria-hidden />
-            {demo("mt-0", {})}
+        <StateCell label="siblings-shift" note="on drag, siblings translate to make room — no drop line, no accent color" className="col-span-2">
+          <div className="flex flex-col gap-1.5">
+            <div style={{ transform: "translateY(-66px)", transition: "transform 180ms ease-out" }}>{demo()}</div>
+            <div style={{ transform: "translateY(24px)", transition: "none", zIndex: 2, position: "relative" }} className="shadow-[0_8px_24px_rgba(0,0,0,0.4)]">{demo()}</div>
+            <div>{demo()}</div>
           </div>
         </StateCell>
       </div>

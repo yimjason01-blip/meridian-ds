@@ -52,17 +52,17 @@
 ### Drag behavior
 
 - **Grip-only drag.** Click-elsewhere is click-to-expand. Never whole-card drag.
+- **Pointer-based, not HTML5 DnD.** The whole card follows the cursor 1:1. Siblings shift their position to make room. This is the spatial affordance — no drop indicator line, no accent color, no highlight band. The movement IS the signal.
 - Pickup:
   - Cursor: `grabbing`
-  - Picked card: `box-shadow: 0 8px 24px rgba(0,0,0,0.4)`, `transform: translateY(-2px)`, `opacity: 0.92`
-  - Drop indicator: thin 2px horizontal line in `var(--accent-hover)` between sibling cards at the insertion point. No band, no background shift. Precise placement signal, Linear-style.
+  - Picked card: `box-shadow: 0 8px 24px rgba(0,0,0,0.4)`, `translateY(dy)` tracking pointer. No opacity change. No translate offset — it's exactly where the pointer grabbed it.
+  - Siblings: translate up/down by one card-height (card + gap) to open the insertion slot. 180ms ease-out.
 - Drop:
-  - Smooth FLIP animation, 180ms ease-out, for all sibling cards
-  - Priority numbers re-number and crossfade (100ms)
+  - Card snaps to target slot. Priority numbers re-number and crossfade (100ms).
 - Cancel:
-  - `Esc` during drag → card returns to origin with same FLIP timing
+  - `Esc` during keyboard-lift → card returns. Pointer-drag has no cancel — release anywhere outside the original slot drops at nearest slot (there is no "invalid" target).
 - Auto-scroll:
-  - Near top / bottom 40px of scrollable viewport, container scrolls at 8px/frame
+  - Near top / bottom 40px of scrollable viewport, container scrolls at 8px/frame.
 
 ### Keyboard
 
@@ -82,15 +82,18 @@
 
 ## State matrix
 
-| State | Grip | Row bg | Shadow | Opacity |
+| State | Grip | Row bg | Shadow | Transform |
 |---|---|---|---|---|
-| default | muted | bg-panel | none | 1 |
-| hover (anywhere on row) | secondary | bg-hover | none | 1 |
-| focus (tab to grip) | secondary + 2px accent ring | bg-panel | none | 1 |
-| grabbing | text | bg-panel | 0 8px 24px / 40% | 0.92 |
-| drop-target-above | — | — | — | — (sibling shows 16px accent-light band above) |
-| expanded | muted | bg-panel | none | 1 |
-| disabled (e.g. "being saved") | border-subtle | bg-panel | none | 0.55 |
+| default | muted | bg-panel | none | none |
+| hover (anywhere on row) | secondary | bg-hover | none | none |
+| focus (tab to grip) | secondary + 1px border-strong ring | bg-panel | none | none |
+| grabbing | text | bg-panel | 0 8px 24px / 40% | `translateY(dy)` tracking pointer |
+| sibling-above-source (while dragging down) | — | — | none | `translateY(-step)` 180ms |
+| sibling-below-source (while dragging up) | — | — | none | `translateY(+step)` 180ms |
+| expanded | muted | bg-panel | none | none |
+| disabled (e.g. "being saved") | border-subtle | bg-panel | none | opacity 0.55 |
+
+**Drag uses no accent color.** The interaction is communicated entirely by (a) the dragged card following the pointer 1:1 and (b) siblings shifting into position. Accent color is reserved for CTA / active / selected — it would be a visual crutch here.
 
 ## Props (when implemented)
 
@@ -117,12 +120,13 @@ interface ReorderableListProps {
 ## Hard rules
 
 1. **Grip is the only drag surface.** Do not allow whole-card drag when cards have click behavior.
-2. **Only one card expanded by default.** Accordion mode. Multi-expand is opt-in.
-3. **Priority numbers re-number after drop.** Don't just reorder visually and keep stale numbers.
-4. **Reorder is save-on-drop.** No "Save order" button. If the parent persists async, show a quiet "Saved" flash, not a confirm.
-5. **Never disable the grip during expand.** Physician may want to reorder without collapsing first.
-6. **Do not nest ReorderableCard inside ReorderableCard.** Reorder at one scope per surface.
-7. **No drag for a list of 1.** Grip hides. No grip on disabled items either.
+2. **No accent color in drag interaction.** No drop indicator line, no background wash, no ring. The dragged card's motion + siblings' shift IS the signal. Accent is reserved for CTA / active / selected and would be a crutch here.
+3. **Only one card expanded by default.** Accordion mode. Multi-expand is opt-in.
+4. **Priority numbers re-number after drop.** Don't just reorder visually and keep stale numbers.
+5. **Reorder is save-on-drop.** No "Save order" button. If the parent persists async, show a quiet "Saved" flash, not a confirm.
+6. **Never disable the grip during expand.** Physician may want to reorder without collapsing first.
+7. **Do not nest ReorderableCard inside ReorderableCard.** Reorder at one scope per surface.
+8. **No drag for a list of 1.** Grip hides. No grip on disabled items either.
 
 ## What this is NOT
 

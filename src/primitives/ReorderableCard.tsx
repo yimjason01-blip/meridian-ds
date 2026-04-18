@@ -5,13 +5,14 @@ import { cn } from "../lib/cn";
  * ReorderableCard + ReorderableList — Meridian primitive.
  *
  * Spec: src/primitives/ReorderableCard.md
- * Banned patterns enforced:
- *   - whole-card-drag   : drag originates from grip only
- *   - stale-priority-number : numbers re-render from list index
- *   - confirm-reorder   : save-on-drop, no confirm
  *
- * HTML5 DnD, accordion expand, keyboard-first reorder (Space to lift, ↑/↓, Space to drop, Esc cancel).
- * Designed to wrap DecisionCard (or any clinical card) in its expanded body.
+ * Pointer-based drag (not HTML5 DnD). The whole card follows the cursor;
+ * siblings shift their position to make room. No drop indicator line — the
+ * insertion point is communicated by the siblings' physical movement.
+ * No accent color used in drag interaction (neutral: shadow + transform only).
+ *
+ * Keyboard reorder: Tab to grip → Space to lift → ↑/↓ → Space to drop · Esc cancels.
+ * Accordion expand: click title or caret. Click on grip does nothing (grip is drag-only).
  */
 
 export interface ReorderableItem {
@@ -30,6 +31,8 @@ interface ReorderableListProps {
   className?: string;
 }
 
+const GAP_PX = 6; // matches gap-1.5 on the list container
+
 export function ReorderableList({
   items,
   onReorder,
@@ -38,10 +41,16 @@ export function ReorderableList({
   className,
 }: ReorderableListProps) {
   const [expanded, setExpanded] = React.useState<Set<string>>(new Set());
-  const [dragIndex, setDragIndex] = React.useState<number | null>(null);
-  const [overIndex, setOverIndex] = React.useState<number | null>(null);
   const [liftedIndex, setLiftedIndex] = React.useState<number | null>(null);
+  const [drag, setDrag] = React.useState<null | {
+    index: number;
+    dy: number;
+    targetIndex: number;
+    step: number; // card height + gap (per-slot shift amount)
+  }>(null);
+
   const liveRef = React.useRef<HTMLDivElement>(null);
+  const itemRefs = React.useRef<Map<string, HTMLElement>>(new Map());
 
   const announce = (msg: string) => {
     if (liveRef.current) liveRef.current.textContent = msg;
@@ -56,34 +65,57 @@ export function ReorderableList({
     });
   };
 
-  const handleDragStart = (i: number) => (e: React.DragEvent) => {
+  // ─── Pointer-based drag ────────────────────────────────────────────────
+
+  const startY = React.useRef<number>(0);
+
+  const handlePointerDown = (i: number) => (e: React.PointerEvent<HTMLButtonElement>) => {
     if (items[i].disabled) return;
-    setDragIndex(i);
-    e.dataTransfer.effectAllowed = "move";
-    // Fallback for Firefox
-    e.dataTransfer.setData("text/plain", items[i].id);
+    if (e.button !== 0) return; // primary button only
+    e.preventDefault();
+
+    const el = itemRefs.current.get(items[i].id);
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const step = rect.height + GAP_PX;
+
+    startY.current = e.clientY;
+    setDrag({ index: i, dy: 0, targetIndex: i, step });
+
+    e.currentTarget.setPointerCapture(e.pointerId);
   };
 
-  const handleDragOver = (i: number) => (e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-    if (dragIndex !== null && i !== overIndex) setOverIndex(i);
+  const handlePointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (!drag) return;
+    const dy = e.clientY - startY.current;
+    const targetIndex = Math.max(
+      0,
+      Math.min(items.length - 1, drag.index + Math.round(dy / drag.step))
+    );
+    setDrag({ ...drag, dy, targetIndex });
   };
 
-  const handleDrop = (i: number) => (e: React.DragEvent) => {
-    e.preventDefault();
-    if (dragIndex !== null && dragIndex !== i) {
-      onReorder(dragIndex, i);
-      announce(`Moved ${items[dragIndex].title} to position ${i + 1} of ${items.length}`);
+  const endDrag = () => {
+    if (!drag) return;
+    if (drag.targetIndex !== drag.index) {
+      onReorder(drag.index, drag.targetIndex);
+      announce(
+        `Moved ${items[drag.index].title} to position ${drag.targetIndex + 1} of ${items.length}`
+      );
     }
-    setDragIndex(null);
-    setOverIndex(null);
+    setDrag(null);
   };
 
-  const handleDragEnd = () => {
-    setDragIndex(null);
-    setOverIndex(null);
+  const handlePointerUp = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+    endDrag();
   };
+
+  const handlePointerCancel = () => endDrag();
+
+  // ─── Keyboard reorder ─────────────────────────────────────────────────
 
   const handleGripKey = (i: number) => (e: React.KeyboardEvent) => {
     if (items[i].disabled) return;
@@ -91,14 +123,16 @@ export function ReorderableList({
       e.preventDefault();
       if (liftedIndex === null) {
         setLiftedIndex(i);
-        announce(`Lifted ${items[i].title}. Use arrow keys to move, Space to drop, Escape to cancel.`);
+        announce(
+          `Lifted ${items[i].title}. Use arrow keys to move, Space to drop, Escape to cancel.`
+        );
       } else {
         announce(`Dropped ${items[liftedIndex].title} at position ${liftedIndex + 1}`);
         setLiftedIndex(null);
       }
     } else if (e.key === "Escape" && liftedIndex !== null) {
       e.preventDefault();
-      announce(`Cancelled.`);
+      announce("Cancelled.");
       setLiftedIndex(null);
     } else if ((e.key === "ArrowUp" || e.key === "ArrowDown") && liftedIndex !== null) {
       e.preventDefault();
@@ -111,120 +145,135 @@ export function ReorderableList({
     }
   };
 
+  // ─── Transform computation per item ───────────────────────────────────
+
+  const itemTransform = (i: number): { transform: string; transition: string; z: number } => {
+    if (!drag) return { transform: "", transition: "transform 180ms ease-out", z: 0 };
+
+    if (i === drag.index) {
+      // The dragged card follows the pointer 1:1, no transition, on top.
+      return { transform: `translateY(${drag.dy}px)`, transition: "none", z: 2 };
+    }
+
+    const { index: src, targetIndex: dst, step } = drag;
+    if (dst > src && i > src && i <= dst) {
+      return { transform: `translateY(-${step}px)`, transition: "transform 180ms ease-out", z: 0 };
+    }
+    if (dst < src && i >= dst && i < src) {
+      return { transform: `translateY(${step}px)`, transition: "transform 180ms ease-out", z: 0 };
+    }
+    return { transform: "", transition: "transform 180ms ease-out", z: 0 };
+  };
+
   return (
     <div
       role="list"
       aria-label={ariaLabel}
-      className={cn("flex flex-col gap-1.5", className)}
+      className={cn("flex flex-col gap-1.5 relative", className)}
     >
       <div ref={liveRef} aria-live="polite" aria-atomic="true" className="sr-only" />
       {items.map((item, i) => {
         const isExpanded = expanded.has(item.id);
-        const isDragging = dragIndex === i;
+        const isDragging = drag?.index === i;
         const isLifted = liftedIndex === i;
-        const showDropAbove = overIndex === i && dragIndex !== null && dragIndex > i;
-        const showDropBelow = overIndex === i && dragIndex !== null && dragIndex < i;
+        const { transform, transition, z } = itemTransform(i);
 
         return (
-          <React.Fragment key={item.id}>
-            {showDropAbove && <DropIndicator />}
-            <article
-              role="listitem"
-              data-dragging={isDragging || undefined}
-              data-lifted={isLifted || undefined}
-              data-disabled={item.disabled || undefined}
-              onDragOver={handleDragOver(i)}
-              onDrop={handleDrop(i)}
+          <article
+            key={item.id}
+            role="listitem"
+            ref={(el) => {
+              if (el) itemRefs.current.set(item.id, el);
+              else itemRefs.current.delete(item.id);
+            }}
+            data-rc-item
+            data-dragging={isDragging || undefined}
+            data-lifted={isLifted || undefined}
+            data-disabled={item.disabled || undefined}
+            style={{
+              transform,
+              transition,
+              zIndex: z,
+              willChange: drag ? "transform" : undefined,
+            }}
+            className={cn(
+              "bg-white/[.02] border border-border rounded-card overflow-hidden",
+              // Neutral lift feel — shadow only, no opacity, no accent
+              isDragging && "shadow-[0_8px_24px_rgba(0,0,0,0.4)]",
+              isLifted && "ring-1 ring-[var(--border-strong)]",
+              item.disabled && "opacity-55"
+            )}
+          >
+            <div
               className={cn(
-                "group bg-white/[.02] border border-border rounded-card overflow-hidden transition-colors",
-                "data-[dragging]:opacity-[0.92] data-[dragging]:shadow-[0_8px_24px_rgba(0,0,0,0.4)] data-[dragging]:-translate-y-0.5",
-                "data-[lifted]:ring-2 data-[lifted]:ring-accent-hover",
-                "data-[disabled]:opacity-55",
-                "transition-all duration-150"
+                "flex items-center h-[60px] px-2 gap-3",
+                !isDragging && "hover:bg-[var(--bg-hover)] transition-colors"
               )}
             >
-              {/* Collapsed row — always visible */}
-              <div
+              {/* Grip — only drag surface */}
+              <button
+                type="button"
+                onPointerDown={handlePointerDown(i)}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerCancel={handlePointerCancel}
+                onKeyDown={handleGripKey(i)}
+                aria-label={`Drag to reorder ${item.title}`}
+                aria-grabbed={isLifted || isDragging}
+                disabled={item.disabled}
                 className={cn(
-                  "flex items-center h-[60px] px-2 gap-3 cursor-default",
-                  "hover:bg-[var(--bg-hover)] transition-colors"
+                  "flex items-center justify-center w-6 h-10 text-text-muted hover:text-text-secondary",
+                  "cursor-grab active:cursor-grabbing",
+                  "focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--border-strong)] rounded",
+                  "disabled:cursor-not-allowed touch-none select-none"
                 )}
               >
-                {/* Grip */}
-                <button
-                  type="button"
-                  draggable={!item.disabled}
-                  onDragStart={handleDragStart(i)}
-                  onDragEnd={handleDragEnd}
-                  onKeyDown={handleGripKey(i)}
-                  aria-label={`Drag to reorder ${item.title}`}
-                  aria-grabbed={isLifted}
-                  disabled={item.disabled}
-                  className={cn(
-                    "flex items-center justify-center w-6 h-10 text-text-muted hover:text-text-secondary",
-                    "cursor-grab active:cursor-grabbing focus:outline-none focus:ring-2 focus:ring-accent-hover rounded",
-                    "disabled:cursor-not-allowed"
-                  )}
-                >
-                  <GripIcon />
-                </button>
+                <GripIcon />
+              </button>
 
-                {/* Priority number — always = index + 1 (source of truth is list order) */}
-                <span className="t-mono text-[15px] text-text w-6 tabular-nums text-right">
-                  {String(i + 1).padStart(2, "0")}
-                </span>
+              {/* Priority number — always = index + 1 */}
+              <span className="t-mono text-[15px] text-text w-6 tabular-nums text-right">
+                {String(i + 1).padStart(2, "0")}
+              </span>
 
-                {/* Title (click to expand) */}
-                <button
-                  type="button"
-                  onClick={() => toggleExpand(item.id)}
-                  className="flex-1 min-w-0 flex items-center justify-between gap-3 text-left focus:outline-none"
-                >
-                  <span className="truncate text-[15px] font-[510] text-text">{item.title}</span>
-                  {item.meta && item.meta.length > 0 && (
-                    <span className="t-meta flex-shrink-0 hidden sm:inline">
-                      {item.meta.join(" · ")}
-                    </span>
-                  )}
-                </button>
+              {/* Title — click to expand */}
+              <button
+                type="button"
+                onClick={() => toggleExpand(item.id)}
+                className="flex-1 min-w-0 flex items-center justify-between gap-3 text-left focus:outline-none"
+              >
+                <span className="truncate text-[15px] font-[510] text-text">{item.title}</span>
+                {item.meta && item.meta.length > 0 && (
+                  <span className="t-meta flex-shrink-0 hidden sm:inline">
+                    {item.meta.join(" · ")}
+                  </span>
+                )}
+              </button>
 
-                {/* Caret */}
-                <button
-                  type="button"
-                  onClick={() => toggleExpand(item.id)}
-                  aria-label={isExpanded ? "Collapse" : "Expand"}
-                  aria-expanded={isExpanded}
-                  className={cn(
-                    "flex items-center justify-center w-6 h-6 text-text-muted hover:text-text-secondary",
-                    "transition-transform duration-200",
-                    isExpanded && "rotate-180"
-                  )}
-                >
-                  <CaretIcon />
-                </button>
-              </div>
+              {/* Caret */}
+              <button
+                type="button"
+                onClick={() => toggleExpand(item.id)}
+                aria-label={isExpanded ? "Collapse" : "Expand"}
+                aria-expanded={isExpanded}
+                className={cn(
+                  "flex items-center justify-center w-6 h-6 text-text-muted hover:text-text-secondary",
+                  "transition-transform duration-200",
+                  isExpanded && "rotate-180"
+                )}
+              >
+                <CaretIcon />
+              </button>
+            </div>
 
-              {/* Expanded body — accordion */}
-              {isExpanded && (
-                <div className="border-t border-border-subtle animate-[accordion_180ms_ease-out]">
-                  {item.body}
-                </div>
-              )}
-            </article>
-            {showDropBelow && <DropIndicator />}
-          </React.Fragment>
+            {/* Accordion body */}
+            {isExpanded && !isDragging && (
+              <div className="border-t border-border-subtle">{item.body}</div>
+            )}
+          </article>
         );
       })}
     </div>
-  );
-}
-
-function DropIndicator() {
-  return (
-    <div
-      aria-hidden
-      className="h-0.5 bg-accent-hover rounded-full -my-px"
-    />
   );
 }
 
