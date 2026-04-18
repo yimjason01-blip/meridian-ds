@@ -34,7 +34,7 @@ export default function Reference() {
         <ClinicalSection />
       </main>
       <footer className="max-w-[1200px] mx-auto px-6 py-10 border-t border-border-subtle mt-16">
-        <div className="t-meta">Meridian DS v1.1 · Locked 2026-04-18 · tokens.json is source of truth</div>
+        <div className="t-meta">Meridian MD DS v1.3 · Locked 2026-04-18 · tokens.json is source of truth</div>
       </footer>
     </div>
   );
@@ -44,11 +44,32 @@ function Header() {
   return (
     <header className="sticky top-0 z-10 bg-bg/90 backdrop-blur border-b border-border-subtle">
       <div className="max-w-[1200px] mx-auto px-6 py-4 flex items-baseline justify-between">
-        <div className="flex items-baseline gap-3">
-          <span className="t-h2">Meridian</span>
-          <span className="t-ui text-text-muted">Design System</span>
+        <div className="flex items-baseline gap-2">
+          <span
+            style={{
+              fontSize: 20,
+              fontWeight: 400,
+              letterSpacing: "-0.03em",
+              color: "var(--text-secondary)",
+              lineHeight: 1.08,
+            }}
+          >
+            Meridian
+          </span>
+          <span
+            style={{
+              fontSize: 20,
+              fontWeight: 510,
+              letterSpacing: "-0.02em",
+              color: "var(--text)",
+              lineHeight: 1.08,
+            }}
+          >
+            MD
+          </span>
+          <span className="t-ui text-text-muted ml-3">Design System</span>
         </div>
-        <span className="t-meta">v1.0 · dark-only · Linear-native · shadcn/Radix primitives</span>
+        <span className="t-meta">v1.3 · dark-only · Linear-native · shadcn/Radix primitives</span>
       </div>
     </header>
   );
