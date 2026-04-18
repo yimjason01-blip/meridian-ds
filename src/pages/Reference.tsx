@@ -792,7 +792,7 @@ function RC_States() {
             {/* AFTER — mid-drag */}
             <div>
               <div className="t-meta mb-2">during drag — list closes the gap · lifted card detaches</div>
-              <div className="grid grid-cols-[1fr_auto] gap-4 items-start">
+              <div className="grid grid-cols-[1fr_auto] gap-8 items-start">
                 {/* list with ghost slot + shifted siblings */}
                 <div className="flex flex-col gap-1.5 p-4 rounded-card border border-border-subtle bg-white/[.01]">
                   <div className="opacity-40 border border-dashed border-border rounded-card h-[60px] flex items-center justify-center text-text-muted text-[12px] tracking-wide">
@@ -802,7 +802,7 @@ function RC_States() {
                   {demo()}
                 </div>
                 {/* lifted card — detached, beside the list, tilted */}
-                <div className="pt-[76px] w-[220px]">
+                <div className="pt-[76px] w-[200px]">
                   <div className="t-meta mb-1.5 text-center">lifted</div>
                   <div className="shadow-[0_16px_40px_rgba(0,0,0,0.6)] rotate-[1.5deg]">
                     <article className="bg-white/[.04] border border-border rounded-card overflow-hidden">
