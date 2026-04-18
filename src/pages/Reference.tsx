@@ -9,7 +9,7 @@ import { Badge } from "../primitives/Badge";
 import { Input } from "../primitives/Input";
 import { Table, THead, TR, TH, TD } from "../primitives/Table";
 import { ReorderableList } from "../primitives/ReorderableCard";
-import { AskProvider, AskInline, AskPane, AskCommand, AskTrigger, useAsk } from "../primitives/Ask";
+import { AskProvider, AskInline, AskPane, AskCommand, AskTrigger, AskLauncher, useAsk } from "../primitives/Ask";
 import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription } from "../primitives/Dialog";
 import { DropdownMenu, DropdownTrigger, DropdownContent, DropdownItem, DropdownSeparator } from "../primitives/DropdownMenu";
 import { SegmentedControl } from "../primitives/SegmentedControl";
@@ -920,10 +920,11 @@ function AskSection() {
     <Section
       n="10"
       title="Ask — AI-assist"
-      rule="How AI lives inside Meridian. Two surfaces, one entry point. Inline for pointed / ephemeral questions bound to a specific element. Push-pane for deliberation with memory — the pane resizes the canvas, it never overlays clinical content. ⌘K is the keyboard accelerator, not a third surface."
+      rule="How AI lives inside Meridian. One persistent launcher (icon-only, bottom-right) plus two surfaces: Inline popover for pointed questions bound to a specific element, and a push-pane for deliberation with memory. ⌘K is the keyboard accelerator, not a third surface."
     >
       <div className="grid grid-cols-1 gap-6">
         <AskModelCard />
+        <AskLauncherDemo />
         <AskLiveDemo />
         <AskAnchors />
         <AskRules />
@@ -934,6 +935,13 @@ function AskSection() {
 
 function AskModelCard() {
   const rows = [
+    {
+      name: "AskLauncher",
+      when: "Always present, icon-only FAB",
+      example: "Bottom-right corner, sparkle, inverted colors",
+      memory: "n/a (opens the pane)",
+      dismiss: "Hides itself when pane is open",
+    },
     {
       name: "AskInline",
       when: "Pointed, ephemeral, anchor-bound",
@@ -984,6 +992,66 @@ function AskModelCard() {
         </Table>
       </div>
     </Card>
+  );
+}
+
+function AskLauncherDemo() {
+  return (
+    <Card>
+      <CardHeader>Launcher — persistent, icon-only, bottom-right</CardHeader>
+      <AskProvider>
+        <div className="space-y-4">
+          <div className="grid grid-cols-[160px_1fr] gap-x-4 gap-y-3 text-[13px] items-center">
+            <span className="t-label">square (default)</span>
+            <div className="flex items-center gap-4">
+              <InlineLauncherPreview shape="square" />
+              <span className="t-meta text-text-muted">44 × 44, rounded 10px, inverted colors</span>
+            </div>
+
+            <span className="t-label">circle</span>
+            <div className="flex items-center gap-4">
+              <InlineLauncherPreview shape="circle" />
+              <span className="t-meta text-text-muted">Same footprint, fully round</span>
+            </div>
+          </div>
+
+          <div className="relative rounded-card border border-border overflow-hidden h-[260px] bg-bg flex">
+            <div className="flex-1 min-w-0 relative overflow-y-auto p-5 space-y-2">
+              <div className="t-meta text-text-muted">MOCK CANVAS</div>
+              <p className="t-body text-text-secondary max-w-[40ch]">
+                Any surface. The launcher is present in the bottom-right regardless of what's here. Click it to open the pane.
+              </p>
+              <AskLauncher contained />
+            </div>
+            <AskPane widthPx={300} />
+            <AskCommand />
+            <AskInline />
+          </div>
+
+          <p className="t-meta text-text-muted">
+            Click the launcher. Pane opens from the right edge. The launcher itself fades out while the pane is open — the pane has its own close X. Close the pane and the launcher returns.
+          </p>
+        </div>
+      </AskProvider>
+    </Card>
+  );
+}
+
+function InlineLauncherPreview({ shape }: { shape: "square" | "circle" }) {
+  // Static visual reference (not the live FAB) — rendered inline for compare.
+  return (
+    <div
+      className={cn(
+        "w-11 h-11 flex items-center justify-center",
+        shape === "circle" ? "rounded-full" : "rounded-[10px]",
+        "bg-text text-bg",
+        "shadow-[0_8px_24px_-8px_rgba(0,0,0,0.55)]"
+      )}
+    >
+      <svg width="16" height="16" viewBox="0 0 12 12" fill="currentColor" aria-hidden>
+        <path d="M6 0.75 L7.15 4.85 L11.25 6 L7.15 7.15 L6 11.25 L4.85 7.15 L0.75 6 L4.85 4.85 Z" />
+      </svg>
+    </div>
   );
 }
 
@@ -1121,11 +1189,14 @@ function AskAnchors() {
 
 function AskRules() {
   const rules: [string, string][] = [
-    ["no-pane-overlay", "The pane is a flex sibling of the canvas. When open, the canvas narrows. Never a portaled overlay."],
+    ["launcher-icon-only", "The persistent launcher is icon-only. No copy, no label. Sparkle glyph in the bottom-right corner. Physicians figure it out once."],
+    ["launcher-inverted-chrome", "The launcher uses inverted colors (bg-text on text-bg surface) to stand out. It is the one exception to the neutral-chrome rule for AI — because it's the only always-present entry point, it must register."],
+    ["launcher-autohide", "When the pane is open, the launcher fades out. The pane's own close X is the way back. Two close affordances at once is noise."],
+    ["no-pane-overlay-on-primary-canvas", "Where it fits, pane is a flex sibling of the primary canvas and narrows it. Where the primary canvas is complex or fixed (e.g. cross-section app chrome), the pane is fixed right-dock with a shadow — still no content is hidden behind it, because the primary canvas accounts for the pane width."],
     ["source-on-every-answer", "Every assistant message renders a source line (model name + version, or evidence bundle reference)."],
-    ["two-surfaces-max", "Inline + Pane. ⌘K is an accelerator, not a third surface. Floating chatbots and toggles are banned."],
+    ["two-surfaces-max", "Inline + Pane. ⌘K is an accelerator. Launcher is an entry button. No floating chatbots, no sidebar toggles, no third panel."],
     ["graduation-path", "Inline has a 'Continue in thread' action that lifts query + anchor label into the pane. Without it, physicians re-type or lose the thread."],
-    ["neutral-chrome", "Ask triggers use neutral borders + text-muted. No accent color. Accent is reserved for CTA / active / selected."],
+    ["neutral-chrome-everywhere-else", "Ask triggers inside content use neutral borders + text-muted. No accent color. Accent is reserved for CTA / active / selected."],
     ["anchor-bound", "Inline appears next to the element the physician clicked — max 380 px wide, flips above if no room below."],
   ];
   return (
