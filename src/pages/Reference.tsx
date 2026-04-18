@@ -8,6 +8,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "../primitives/Tabs";
 import { Badge } from "../primitives/Badge";
 import { Input } from "../primitives/Input";
 import { Table, THead, TR, TH, TD } from "../primitives/Table";
+import { ReorderableList } from "../primitives/ReorderableCard";
 import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription } from "../primitives/Dialog";
 import { DropdownMenu, DropdownTrigger, DropdownContent, DropdownItem, DropdownSeparator } from "../primitives/DropdownMenu";
 import { SegmentedControl } from "../primitives/SegmentedControl";
@@ -484,9 +485,32 @@ function PrimitivesSection() {
             </tbody>
           </Table>
         </Card>
+
+        <Card className="col-span-2">
+          <CardHeader>ReorderableList — drag-reorder cards</CardHeader>
+          <ReorderableListDemo />
+          <p className="t-meta mt-3">Grip-only drag. Drop indicator: 2px accent line. Save-on-drop. Keyboard: Tab to grip → Space to lift → ↑/↓ → Space to drop · Esc cancels. Meta shape: severity · time-to-action. Spec: src/primitives/ReorderableCard.md</p>
+        </Card>
       </div>
     </Section>
   );
+}
+
+function ReorderableListDemo() {
+  const [items, setItems] = React.useState([
+    { id: "a", title: "Intensify statin: atorva 20 → rosuva 10 mg qHS", meta: ["Moderate", "next visit"], body: <div className="p-4 t-body text-text-secondary">Expanded body renders DecisionCard here.</div> },
+    { id: "b", title: "Order pancreatic MRCP — schedule within 30 d",  meta: ["High", "30 d"],        body: <div className="p-4 t-body text-text-secondary">Expanded body renders DecisionCard here.</div> },
+    { id: "c", title: "Add GLP-1 agonist trial: semaglutide 0.25 mg",  meta: ["Moderate", "next visit"], body: <div className="p-4 t-body text-text-secondary">Expanded body renders DecisionCard here.</div> },
+  ]);
+  const onReorder = (from: number, to: number) => {
+    setItems(prev => {
+      const next = [...prev];
+      const [m] = next.splice(from, 1);
+      next.splice(to, 0, m);
+      return next;
+    });
+  };
+  return <ReorderableList items={items} onReorder={onReorder} ariaLabel="Demo" />;
 }
 
 // ───── State matrix ──────────────────────────────────────────────────────
