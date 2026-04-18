@@ -38,7 +38,7 @@ export default function Reference() {
         <ClinicalSection />
       </main>
       <footer className="max-w-[1200px] mx-auto px-6 py-10 border-t border-border-subtle mt-16">
-        <div className="t-meta">Meridian MD DS v1.4 · Locked 2026-04-18 · tokens.json is source of truth</div>
+        <div className="t-meta">Meridian MD DS v1.4.1 · Locked 2026-04-18 · tokens.json is source of truth</div>
       </footer>
     </div>
   );
@@ -73,7 +73,7 @@ function Header() {
           </span>
           <span className="t-ui text-text-muted ml-3">Design System</span>
         </div>
-        <span className="t-meta">v1.4 · dark-only · Linear-native · shadcn/Radix primitives</span>
+        <span className="t-meta">v1.4.1 · dark-only · Linear-native · shadcn/Radix primitives</span>
       </div>
     </header>
   );
@@ -497,7 +497,7 @@ function PrimitivesSection() {
 
 function StateMatrixSection() {
   return (
-    <Section n="09" title="State Matrix" rule="Every interactive component must handle default / hover / focus / active / disabled / loading / empty / error. Empty and loading are the most skipped.">
+    <Section n="11" title="State Matrix" rule="Every interactive component must handle default / hover / focus / active / disabled / loading / empty / error. Empty and loading are the most skipped.">
       <div className="grid grid-cols-3 gap-3">
         <StateDemo label="Default"><Button variant="primary">Sign order</Button></StateDemo>
         <StateDemo label="Hover (simulated)"><Button variant="primary" className="bg-accent-hover">Sign order</Button></StateDemo>
@@ -555,7 +555,7 @@ function SegmentedControlDemo() {
 
 function BannedPatternsSection() {
   return (
-    <Section n="10" title="Banned Patterns" rule="Enforced by tests where possible, by code review otherwise. AI agents must read this list from tokens.json › banned_patterns before generating.">
+    <Section n="12" title="Banned Patterns" rule="Enforced by tests where possible, by code review otherwise. AI agents must read this list from tokens.json › banned_patterns before generating.">
       <ul className="space-y-2">
         {tokens.banned_patterns.map((p) => (
           <li key={p.id} className="flex gap-3 items-start rounded-card border border-border-subtle p-3">
@@ -575,7 +575,7 @@ function BannedPatternsSection() {
 
 function ClinicalSection() {
   return (
-    <Section n="11" title="Clinical Components" rule="Meridian-native. The 30% no off-the-shelf system ships. Each encodes a skill: PatientBanner, Flowsheet, DomainPane, DecisionCard.">
+    <Section n="13" title="Clinical Components" rule="Meridian-native. The 30% no off-the-shelf system ships. Each encodes a skill: PatientBanner, Flowsheet, DomainPane, DecisionCard.">
       <div className="space-y-8">
         <div>
           <div className="t-label mb-2">PatientBanner</div>
@@ -1058,7 +1058,7 @@ function InlineLauncherPreview({ shape }: { shape: "square" | "circle" }) {
 function AskLiveDemo() {
   return (
     <Card>
-      <CardHeader>Live demo — canvas resizes, pane never overlays</CardHeader>
+      <CardHeader>Live demo — Inline, ⌘K, and the pane</CardHeader>
       <AskProvider>
         <AskDemoBody />
         <AskInline />
@@ -1155,7 +1155,7 @@ function AskDemoBody() {
       </div>
 
       <p className="t-meta text-text-muted">
-        Notice: when the pane opens, the canvas narrows from the left. Nothing is hidden behind an overlay. The inline popover appears next to whatever you clicked.
+        Notice: the inline popover appears next to whatever you clicked — no occlusion of the subject. The pane slides in from the right when you ⌘K or graduate an inline question.
       </p>
     </div>
   );
