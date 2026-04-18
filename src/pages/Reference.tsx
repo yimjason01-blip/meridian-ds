@@ -779,23 +779,34 @@ function RC_States() {
         <StateCell label="disabled" note="grip not draggable; opacity 0.55">{demo("", { disabled: true })}</StateCell>
 
         <StateCell label="siblings-shift" note="on drag, siblings translate to make room — no drop line, no accent color" className="col-span-2">
-          <div className="relative rounded-card border border-border-subtle bg-white/[.01] p-4 overflow-hidden">
-            <div className="flex flex-col gap-1.5">
-              {/* item 01 — original slot, now empty (ghost) */}
-              <div className="opacity-30 border border-dashed border-border rounded-card h-[60px] flex items-center px-4 text-text-muted text-[13px]">
-                ghost — original slot of dragged item
+          <div className="grid grid-cols-2 gap-6">
+            {/* BEFORE */}
+            <div>
+              <div className="t-meta mb-2">before</div>
+              <div className="flex flex-col gap-1.5 p-4 rounded-card border border-border-subtle bg-white/[.01]">
+                {demo()}
+                {demo()}
+                {demo()}
               </div>
-              {/* item 02 — shifted up to close the gap */}
-              <div style={{ transform: "translateY(0)", transition: "transform 180ms ease-out" }}>{demo()}</div>
-              {/* item 03 — shifted up to close the gap */}
-              <div style={{ transform: "translateY(0)", transition: "transform 180ms ease-out" }}>{demo()}</div>
             </div>
-            {/* lifted / dragged card, floating over the stack, offset to show mid-flight */}
-            <div
-              className="absolute left-4 right-4 top-[86px] shadow-[0_12px_32px_rgba(0,0,0,0.5)] pointer-events-none"
-              style={{ transform: "translate(8px, -4px)" }}
-            >
-              {demo("", { dragging: true })}
+            {/* AFTER — mid-drag */}
+            <div>
+              <div className="t-meta mb-2">during drag — ghost slot + siblings shifted up · lifted card floats</div>
+              <div className="relative flex flex-col gap-1.5 p-4 rounded-card border border-border-subtle bg-white/[.01] min-h-[260px]">
+                {/* ghost slot where dragged item originated */}
+                <div className="opacity-30 border border-dashed border-border rounded-card h-[60px] flex items-center justify-center text-text-muted text-[12px] tracking-wide">
+                  ghost slot
+                </div>
+                {/* siblings that translated up to close the gap */}
+                {demo()}
+                {demo()}
+                {/* lifted / dragged card — offset well clear of siblings */}
+                <div
+                  className="absolute right-[-20px] top-[88px] w-[92%] shadow-[0_16px_40px_rgba(0,0,0,0.6)] pointer-events-none rotate-[0.6deg]"
+                >
+                  {demo("", { dragging: true })}
+                </div>
+              </div>
             </div>
           </div>
         </StateCell>
