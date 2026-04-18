@@ -30,6 +30,7 @@ export default function Reference() {
         <ElevationSection />
         <SeparationSection />
         <PrimitivesSection />
+        <ReorderableCardSection />
         <StateMatrixSection />
         <BannedPatternsSection />
         <ClinicalSection />
@@ -485,32 +486,9 @@ function PrimitivesSection() {
             </tbody>
           </Table>
         </Card>
-
-        <Card className="col-span-2">
-          <CardHeader>ReorderableList — drag-reorder cards</CardHeader>
-          <ReorderableListDemo />
-          <p className="t-meta mt-3">Grip-only drag. Drop indicator: 2px accent line. Save-on-drop. Keyboard: Tab to grip → Space to lift → ↑/↓ → Space to drop · Esc cancels. Meta shape: severity · time-to-action. Spec: src/primitives/ReorderableCard.md</p>
-        </Card>
       </div>
     </Section>
   );
-}
-
-function ReorderableListDemo() {
-  const [items, setItems] = React.useState([
-    { id: "a", title: "Intensify statin: atorva 20 → rosuva 10 mg qHS", meta: ["Moderate", "next visit"], body: <div className="p-4 t-body text-text-secondary">Expanded body renders DecisionCard here.</div> },
-    { id: "b", title: "Order pancreatic MRCP — schedule within 30 d",  meta: ["High", "30 d"],        body: <div className="p-4 t-body text-text-secondary">Expanded body renders DecisionCard here.</div> },
-    { id: "c", title: "Add GLP-1 agonist trial: semaglutide 0.25 mg",  meta: ["Moderate", "next visit"], body: <div className="p-4 t-body text-text-secondary">Expanded body renders DecisionCard here.</div> },
-  ]);
-  const onReorder = (from: number, to: number) => {
-    setItems(prev => {
-      const next = [...prev];
-      const [m] = next.splice(from, 1);
-      next.splice(to, 0, m);
-      return next;
-    });
-  };
-  return <ReorderableList items={items} onReorder={onReorder} ariaLabel="Demo" />;
 }
 
 // ───── State matrix ──────────────────────────────────────────────────────
@@ -669,3 +647,266 @@ function ClinicalSection() {
 }
 
 
+
+
+// ───── ReorderableCard (dedicated section) ───────────────────────────────
+// Self-contained: uses only Card/CardHeader/Badge/ReorderableList imports
+// above. Does not mutate or depend on any other section. Iterable in place.
+
+function ReorderableCardSection() {
+  return (
+    <Section
+      n="09"
+      title="ReorderableCard"
+      rule="A thin-row card that lets the physician author the order of a list of peer clinical actions by drag. Grip-only drag, accordion-inline expand, keyboard-first reorder. Used in Care Plan (Top N active queue). Deferred / declined / superseded lists are NOT reorderable — they carry a status reason, not a priority."
+    >
+      <div className="grid grid-cols-1 gap-6">
+        <RC_Anatomy />
+        <RC_States />
+        <RC_Variants />
+        <RC_LiveDemo />
+        <RC_Rules />
+      </div>
+    </Section>
+  );
+}
+
+// ─── Anatomy ────────────────────────────────────────────────────────────
+
+function RC_Anatomy() {
+  return (
+    <Card>
+      <CardHeader>Anatomy — collapsed row (60 px)</CardHeader>
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center h-[60px] px-2 gap-3 rounded-card border border-border bg-white/[.02] relative">
+          <AnatomySpan label="grip" color="accent-hover">
+            <div className="flex items-center justify-center w-6 h-10 text-text-muted">
+              <Grip />
+            </div>
+          </AnatomySpan>
+          <AnatomySpan label="priority" color="status-ok">
+            <span className="t-mono text-[15px] text-text w-6 tabular-nums text-right">02</span>
+          </AnatomySpan>
+          <AnatomySpan label="title" color="accent-bright" className="flex-1 min-w-0">
+            <span className="truncate text-[15px] font-[510] text-text block">Order pancreatic MRCP — schedule within 30 d</span>
+          </AnatomySpan>
+          <AnatomySpan label="meta" color="status-warn">
+            <span className="t-meta">High · 30 d</span>
+          </AnatomySpan>
+          <AnatomySpan label="caret" color="text-muted">
+            <div className="flex items-center justify-center w-6 h-6 text-text-muted"><Caret /></div>
+          </AnatomySpan>
+        </div>
+
+        <dl className="grid grid-cols-[120px_1fr] gap-x-4 gap-y-2 text-ui">
+          <dt className="t-label">grip</dt>
+          <dd className="text-text-secondary">24 px hit area · 6-dot glyph · <code className="t-mono text-text-muted">cursor: grab</code> → <code className="t-mono text-text-muted">grabbing</code>. Only draggable surface. Click-elsewhere routes to expand.</dd>
+
+          <dt className="t-label">priority</dt>
+          <dd className="text-text-secondary">Monospace, tabular numerals, 24 px column. Value = list index + 1. Re-renders on drop — never stale.</dd>
+
+          <dt className="t-label">title</dt>
+          <dd className="text-text-secondary">One line. Truncates with ellipsis. Click → expand. <code className="t-mono text-text-muted">font-weight: 510</code>.</dd>
+
+          <dt className="t-label">meta</dt>
+          <dd className="text-text-secondary">Max 2 tokens, dot-separated (<code className="t-mono text-text-muted">·</code>). Triage shape: severity · time-to-action.</dd>
+
+          <dt className="t-label">caret</dt>
+          <dd className="text-text-secondary">Disclosure indicator. Rotates 180° when expanded. Click toggles. <code className="t-mono text-text-muted">aria-expanded</code>.</dd>
+        </dl>
+      </div>
+    </Card>
+  );
+}
+
+function AnatomySpan({ label, color, children, className }: { label: string; color: string; children: React.ReactNode; className?: string }) {
+  return (
+    <div className={cn("relative group", className)}>
+      {children}
+      <span
+        className="absolute -bottom-3 left-1/2 -translate-x-1/2 translate-y-full t-meta whitespace-nowrap pointer-events-none"
+        style={{ color: `var(--${color})` }}
+      >
+        {label}
+      </span>
+    </div>
+  );
+}
+
+// ─── State matrix ──────────────────────────────────────────────────────
+
+function RC_States() {
+  const demo = (extraClass = "", opts?: { dragging?: boolean; focus?: boolean; disabled?: boolean; expanded?: boolean }) => (
+    <article
+      className={cn(
+        "bg-white/[.02] border border-border rounded-card overflow-hidden transition-colors",
+        opts?.dragging && "opacity-[0.92] shadow-[0_8px_24px_rgba(0,0,0,0.4)] -translate-y-0.5",
+        opts?.focus && "ring-2 ring-accent-hover",
+        opts?.disabled && "opacity-55",
+        extraClass
+      )}
+    >
+      <div className={cn("flex items-center h-[60px] px-2 gap-3", opts?.dragging && "bg-white/[.02]")}>
+        <div className="flex items-center justify-center w-6 h-10 text-text-muted"><Grip /></div>
+        <span className="t-mono text-[15px] text-text w-6 tabular-nums text-right">02</span>
+        <span className="truncate text-[15px] font-[510] text-text flex-1">Order pancreatic MRCP</span>
+        <span className="t-meta">High · 30 d</span>
+        <div className={cn("flex items-center justify-center w-6 h-6 text-text-muted transition-transform", opts?.expanded && "rotate-180")}><Caret /></div>
+      </div>
+      {opts?.expanded && (
+        <div className="border-t border-border-subtle p-4 t-body text-text-secondary">
+          Expanded body (DecisionCard renders here in product).
+        </div>
+      )}
+    </article>
+  );
+
+  return (
+    <Card>
+      <CardHeader>State matrix</CardHeader>
+      <div className="grid grid-cols-2 gap-4">
+        <StateCell label="default">{demo()}</StateCell>
+        <StateCell label="hover" note="row bg → bg-hover">
+          <div style={{ background: "var(--bg-hover)" }} className="rounded-card">
+            {demo("!bg-transparent")}
+          </div>
+        </StateCell>
+        <StateCell label="focus" note="2 px accent ring on grip row">{demo("", { focus: true })}</StateCell>
+        <StateCell label="grabbing" note="shadow + translateY(-2) + opacity 0.92">{demo("", { dragging: true })}</StateCell>
+        <StateCell label="expanded" note="accordion inline, 180 ms">{demo("", { expanded: true })}</StateCell>
+        <StateCell label="disabled" note="grip not draggable; opacity 0.55">{demo("", { disabled: true })}</StateCell>
+
+        <StateCell label="drop-target-above" note="2 px accent line BETWEEN siblings" className="col-span-2">
+          <div className="flex flex-col gap-0">
+            {demo("mb-0", {})}
+            <div className="h-0.5 bg-accent-hover rounded-full my-1" aria-hidden />
+            {demo("mt-0", {})}
+          </div>
+        </StateCell>
+      </div>
+    </Card>
+  );
+}
+
+function StateCell({ label, note, children, className }: { label: string; note?: string; children: React.ReactNode; className?: string }) {
+  return (
+    <div className={cn("space-y-2", className)}>
+      <div className="flex items-baseline gap-3">
+        <span className="t-label">{label}</span>
+        {note && <span className="t-meta">{note}</span>}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+// ─── Variants ──────────────────────────────────────────────────────────
+
+function RC_Variants() {
+  return (
+    <Card>
+      <CardHeader>Variants</CardHeader>
+      <div className="grid grid-cols-[160px_1fr] gap-x-4 gap-y-4 text-ui items-start">
+        <span className="t-label pt-1">list of 1</span>
+        <p className="text-text-secondary">Grip hides. No reorder possible. Expand + interact still work. Priority number still renders (always <code className="t-mono text-text-muted">01</code>).</p>
+
+        <span className="t-label pt-1">accordion (default)</span>
+        <p className="text-text-secondary">Only one card expanded at a time. Opening a second collapses the first.</p>
+
+        <span className="t-label pt-1">multi-expand (opt-in)</span>
+        <p className="text-text-secondary">Multiple cards expanded simultaneously. Use only when comparing peer items side-by-side.</p>
+
+        <span className="t-label pt-1">with-status-strip</span>
+        <p className="text-text-secondary">Left 2 px border marker to encode tone (<Badge tone="crit">urgent</Badge> = status-crit). Passes through <code className="t-mono text-text-muted">tone</code> to the expanded DecisionCard so they match.</p>
+      </div>
+    </Card>
+  );
+}
+
+// ─── Live demo ──────────────────────────────────────────────────────────
+
+function RC_LiveDemo() {
+  const [items, setItems] = React.useState([
+    { id: "a", title: "Intensify statin: atorva 20 → rosuva 10 mg qHS",           meta: ["Moderate", "next visit"], body: <DemoBody n={1} /> },
+    { id: "b", title: "Order pancreatic MRCP — schedule within 30 d",             meta: ["High", "30 d"],           body: <DemoBody n={2} /> },
+    { id: "c", title: "Add GLP-1 agonist trial: semaglutide 0.25 mg SQ weekly",   meta: ["Moderate", "next visit"], body: <DemoBody n={3} /> },
+    { id: "d", title: "Continue annual MRI + mammogram (alternating q6mo)",       meta: ["Moderate", "next visit"], body: <DemoBody n={4} /> },
+    { id: "e", title: "Continue sleep hygiene protocol; add AM light therapy",    meta: ["Low", "ongoing"],         body: <DemoBody n={5} /> },
+  ]);
+  const onReorder = (from: number, to: number) => {
+    setItems((prev) => {
+      const next = [...prev];
+      const [m] = next.splice(from, 1);
+      next.splice(to, 0, m);
+      return next;
+    });
+  };
+  return (
+    <Card>
+      <CardHeader>Live demo</CardHeader>
+      <p className="t-body text-text-secondary mb-4 max-w-[70ch]">
+        Drag the grip. Or: Tab to a grip → Space to lift → ↑/↓ to move → Space to drop → Esc cancels. Priority numbers re-render on drop.
+      </p>
+      <ReorderableList items={items} onReorder={onReorder} ariaLabel="ReorderableCard demo" />
+    </Card>
+  );
+}
+
+function DemoBody({ n }: { n: number }) {
+  return (
+    <div className="p-4 grid grid-cols-[56px_1fr] gap-3 items-baseline">
+      <span className="t-label">Do</span>
+      <span className="text-[15px] text-text">Stand-in DecisionCard body #{n}. Product consumer renders the real Do/Why/Goal here.</span>
+    </div>
+  );
+}
+
+// ─── Rules ──────────────────────────────────────────────────────────────
+
+function RC_Rules() {
+  const rules = [
+    ["Grip-only drag", "Cards with click-to-expand are not whole-card draggable. Prevents drag/click conflict."],
+    ["Save-on-drop", "No confirm dialog. No Save Order button. Parent persists async; show a quiet flash if needed."],
+    ["Priority re-renders", "Numbers always = index + 1. Never stale after drop."],
+    ["One scope per surface", "Do not nest ReorderableCard inside ReorderableCard."],
+    ["Deferred is not reorderable", "Deferred / declined / superseded items sort by status reason, not priority. Render in a separate non-draggable section."],
+    ["No reorder on list of 1", "Grip hides. No phantom drag affordance."],
+    ["Focus stays on grip after drop", "Keyboard reorder must not lose focus."],
+    ["Accordion by default", "Only one card expanded at a time unless multi-expand is explicitly opted-in."],
+  ];
+  return (
+    <Card>
+      <CardHeader>Hard rules</CardHeader>
+      <ul className="space-y-2">
+        {rules.map(([name, desc]) => (
+          <li key={name} className="grid grid-cols-[200px_1fr] gap-x-4 items-baseline">
+            <span className="t-label">{name}</span>
+            <span className="t-body text-text-secondary">{desc}</span>
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+}
+
+// ─── Icons (local, to avoid cross-section imports) ─────────────────────
+
+function Grip() {
+  return (
+    <svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor" aria-hidden>
+      <circle cx="2" cy="3" r="1.2" />
+      <circle cx="8" cy="3" r="1.2" />
+      <circle cx="2" cy="8" r="1.2" />
+      <circle cx="8" cy="8" r="1.2" />
+      <circle cx="2" cy="13" r="1.2" />
+      <circle cx="8" cy="13" r="1.2" />
+    </svg>
+  );
+}
+function Caret() {
+  return (
+    <svg width="12" height="8" viewBox="0 0 12 8" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden>
+      <path d="M1 1.5 L6 6.5 L11 1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
