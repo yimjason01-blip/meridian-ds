@@ -779,10 +779,24 @@ function RC_States() {
         <StateCell label="disabled" note="grip not draggable; opacity 0.55">{demo("", { disabled: true })}</StateCell>
 
         <StateCell label="siblings-shift" note="on drag, siblings translate to make room — no drop line, no accent color" className="col-span-2">
-          <div className="flex flex-col gap-1.5">
-            <div style={{ transform: "translateY(-66px)", transition: "transform 180ms ease-out" }}>{demo()}</div>
-            <div style={{ transform: "translateY(24px)", transition: "none", zIndex: 2, position: "relative" }} className="shadow-[0_8px_24px_rgba(0,0,0,0.4)]">{demo()}</div>
-            <div>{demo()}</div>
+          <div className="relative rounded-card border border-border-subtle bg-white/[.01] p-4 overflow-hidden">
+            <div className="flex flex-col gap-1.5">
+              {/* item 01 — original slot, now empty (ghost) */}
+              <div className="opacity-30 border border-dashed border-border rounded-card h-[60px] flex items-center px-4 text-text-muted text-[13px]">
+                ghost — original slot of dragged item
+              </div>
+              {/* item 02 — shifted up to close the gap */}
+              <div style={{ transform: "translateY(0)", transition: "transform 180ms ease-out" }}>{demo()}</div>
+              {/* item 03 — shifted up to close the gap */}
+              <div style={{ transform: "translateY(0)", transition: "transform 180ms ease-out" }}>{demo()}</div>
+            </div>
+            {/* lifted / dragged card, floating over the stack, offset to show mid-flight */}
+            <div
+              className="absolute left-4 right-4 top-[86px] shadow-[0_12px_32px_rgba(0,0,0,0.5)] pointer-events-none"
+              style={{ transform: "translate(8px, -4px)" }}
+            >
+              {demo("", { dragging: true })}
+            </div>
           </div>
         </StateCell>
       </div>
