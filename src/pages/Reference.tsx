@@ -679,7 +679,7 @@ function RC_Anatomy() {
   return (
     <Card>
       <CardHeader>Anatomy — collapsed row (60 px)</CardHeader>
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-10">
         <div className="flex items-center h-[60px] px-2 gap-3 rounded-card border border-border bg-white/[.02] relative">
           <AnatomySpan label="grip" color="accent-hover">
             <div className="flex items-center justify-center w-6 h-10 text-text-muted">
