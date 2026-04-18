@@ -9,6 +9,7 @@ import { Badge } from "../primitives/Badge";
 import { Input } from "../primitives/Input";
 import { Table, THead, TR, TH, TD } from "../primitives/Table";
 import { ReorderableList } from "../primitives/ReorderableCard";
+import { AskProvider, AskInline, AskPane, AskCommand, AskTrigger, useAsk } from "../primitives/Ask";
 import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription } from "../primitives/Dialog";
 import { DropdownMenu, DropdownTrigger, DropdownContent, DropdownItem, DropdownSeparator } from "../primitives/DropdownMenu";
 import { SegmentedControl } from "../primitives/SegmentedControl";
@@ -31,12 +32,13 @@ export default function Reference() {
         <SeparationSection />
         <PrimitivesSection />
         <ReorderableCardSection />
+        <AskSection />
         <StateMatrixSection />
         <BannedPatternsSection />
         <ClinicalSection />
       </main>
       <footer className="max-w-[1200px] mx-auto px-6 py-10 border-t border-border-subtle mt-16">
-        <div className="t-meta">Meridian MD DS v1.3 · Locked 2026-04-18 · tokens.json is source of truth</div>
+        <div className="t-meta">Meridian MD DS v1.4 · Locked 2026-04-18 · tokens.json is source of truth</div>
       </footer>
     </div>
   );
@@ -71,7 +73,7 @@ function Header() {
           </span>
           <span className="t-ui text-text-muted ml-3">Design System</span>
         </div>
-        <span className="t-meta">v1.3 · dark-only · Linear-native · shadcn/Radix primitives</span>
+        <span className="t-meta">v1.4 · dark-only · Linear-native · shadcn/Radix primitives</span>
       </div>
     </header>
   );
@@ -910,3 +912,234 @@ function Caret() {
     </svg>
   );
 }
+
+// ─── Ask section ───────────────────────────────────────────────────────
+
+function AskSection() {
+  return (
+    <Section
+      n="10"
+      title="Ask — AI-assist"
+      rule="How AI lives inside Meridian. Two surfaces, one entry point. Inline for pointed / ephemeral questions bound to a specific element. Push-pane for deliberation with memory — the pane resizes the canvas, it never overlays clinical content. ⌘K is the keyboard accelerator, not a third surface."
+    >
+      <div className="grid grid-cols-1 gap-6">
+        <AskModelCard />
+        <AskLiveDemo />
+        <AskAnchors />
+        <AskRules />
+      </div>
+    </Section>
+  );
+}
+
+function AskModelCard() {
+  const rows = [
+    {
+      name: "AskInline",
+      when: "Pointed, ephemeral, anchor-bound",
+      example: "Click tier badge → 'why T2?'",
+      memory: "None",
+      dismiss: "Outside click, Esc, submit, graduate",
+    },
+    {
+      name: "AskPane",
+      when: "Deliberating, persistent, global",
+      example: "'Walk me through this patient'",
+      memory: "Thread (survives close)",
+      dismiss: "Explicit close (X) or collapse",
+    },
+    {
+      name: "AskCommand (⌘K)",
+      when: "Accelerator — keyboard entry",
+      example: "⌘K → type → Enter → opens pane",
+      memory: "Routes to pane",
+      dismiss: "Esc, outside click",
+    },
+  ];
+  return (
+    <Card>
+      <CardHeader>Model — two surfaces, one entry</CardHeader>
+      <div className="overflow-x-auto">
+        <Table>
+          <THead>
+            <TR>
+              <TH>Surface</TH>
+              <TH>When</TH>
+              <TH>Example</TH>
+              <TH>Memory</TH>
+              <TH>Dismiss</TH>
+            </TR>
+          </THead>
+          <tbody>
+            {rows.map((r) => (
+              <TR key={r.name}>
+                <TD><span className="t-mono text-text">{r.name}</span></TD>
+                <TD className="text-text-secondary">{r.when}</TD>
+                <TD className="text-text-secondary">{r.example}</TD>
+                <TD className="text-text-secondary">{r.memory}</TD>
+                <TD className="text-text-secondary">{r.dismiss}</TD>
+              </TR>
+            ))}
+          </tbody>
+        </Table>
+      </div>
+    </Card>
+  );
+}
+
+function AskLiveDemo() {
+  return (
+    <Card>
+      <CardHeader>Live demo — canvas resizes, pane never overlays</CardHeader>
+      <AskProvider>
+        <AskDemoBody />
+        <AskInline />
+        <AskCommand />
+      </AskProvider>
+    </Card>
+  );
+}
+
+function AskDemoBody() {
+  const { openCommand, paneOpen, openPane, closePane } = useAsk();
+  return (
+    <div className="space-y-4">
+      {/* Controls */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <button
+          onClick={openCommand}
+          className="t-meta px-2 py-1 rounded-sm border border-border hover:border-border-strong"
+        >
+          ⌘K command palette
+        </button>
+        <button
+          onClick={() => (paneOpen ? closePane() : openPane())}
+          className="t-meta px-2 py-1 rounded-sm border border-border hover:border-border-strong"
+        >
+          {paneOpen ? "Close pane" : "Open pane"}
+        </button>
+        <span className="t-meta text-text-muted">
+          Click any <span className="t-mono text-text-secondary">Ask</span> chip below to open inline.
+        </span>
+      </div>
+
+      {/* Layout: canvas + pane. This is the contract. */}
+      <div className="flex h-[520px] rounded-card border border-border overflow-hidden bg-bg">
+        <div className="flex-1 min-w-0 overflow-y-auto p-5 space-y-4">
+          <div className="t-meta text-text-muted">MOCK EMR CANVAS</div>
+
+          <article className="rounded-card border border-border bg-white/[.02] p-4 space-y-3">
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="text-[15px] font-[510] text-text">Chronic Kidney Disease</span>
+              <div className="flex items-center gap-2">
+                <span className="t-mono text-[12px] text-text-secondary">Tier T2</span>
+                <AskTrigger label="CKD tier T2" kind="risk-model" />
+              </div>
+            </div>
+            <dl className="grid grid-cols-[120px_1fr] gap-x-4 gap-y-1.5 text-[13px]">
+              <dt className="t-label">eGFR</dt>
+              <dd className="text-text-secondary flex items-center gap-1.5">
+                52 mL/min/1.73m² <span className="t-meta text-text-muted">(−18% / 14 mo)</span>
+                <AskTrigger label="eGFR 52 mL/min" kind="value" variant="icon" />
+              </dd>
+              <dt className="t-label">UACR</dt>
+              <dd className="text-text-secondary flex items-center gap-1.5">
+                108 mg/g <span className="t-meta text-text-muted">(was 32)</span>
+                <AskTrigger label="UACR 108 mg/g" kind="value" variant="icon" />
+              </dd>
+              <dt className="t-label">BP</dt>
+              <dd className="text-text-secondary">128 / 76 · at target</dd>
+            </dl>
+          </article>
+
+          <article className="rounded-card border border-border bg-white/[.02] p-4 space-y-2">
+            <div className="flex items-baseline justify-between gap-3">
+              <div className="flex items-baseline gap-3">
+                <span className="t-mono text-[13px] text-text-secondary">01</span>
+                <span className="text-[15px] font-[510] text-text">Titrate ACEi to max-tolerated dose</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="t-meta">High · 2 wk</span>
+                <AskTrigger label="ACEi titration action" kind="action" />
+              </div>
+            </div>
+            <p className="t-meta text-text-muted">
+              Source: Meridian CKD model v2.3 · Evidence bundle #127 <AskTrigger label="Evidence bundle #127" kind="evidence" variant="link" className="ml-2" />
+            </p>
+          </article>
+
+          <article className="rounded-card border border-border bg-white/[.02] p-4 space-y-2">
+            <div className="flex items-baseline justify-between gap-3">
+              <div className="flex items-baseline gap-3">
+                <span className="t-mono text-[13px] text-text-secondary">02</span>
+                <span className="text-[15px] font-[510] text-text">Order UACR q3mo</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="t-meta">Mod · 90 d</span>
+                <AskTrigger label="UACR q3mo action" kind="action" />
+              </div>
+            </div>
+          </article>
+        </div>
+
+        {/* The pane is a SIBLING of the canvas. Canvas narrows when open. */}
+        <AskPane widthPx={380} />
+      </div>
+
+      <p className="t-meta text-text-muted">
+        Notice: when the pane opens, the canvas narrows from the left. Nothing is hidden behind an overlay. The inline popover appears next to whatever you clicked.
+      </p>
+    </div>
+  );
+}
+
+function AskAnchors() {
+  return (
+    <Card>
+      <CardHeader>Trigger variants</CardHeader>
+      <AskProvider>
+        <div className="space-y-4">
+          <div className="grid grid-cols-[160px_1fr] gap-x-4 gap-y-3 text-[13px] items-center">
+            <span className="t-label">chip (default)</span>
+            <div><AskTrigger label="Demo chip" /></div>
+
+            <span className="t-label">icon</span>
+            <div><AskTrigger label="Demo icon" variant="icon" /></div>
+
+            <span className="t-label">link</span>
+            <div><AskTrigger label="Demo link" variant="link" /></div>
+          </div>
+          <p className="t-meta text-text-muted">
+            Place the chip beside a header. Use the icon inside dense rows (lab values, timeline nodes). Use the link in evidence footers.
+          </p>
+        </div>
+        <AskInline />
+      </AskProvider>
+    </Card>
+  );
+}
+
+function AskRules() {
+  const rules: [string, string][] = [
+    ["no-pane-overlay", "The pane is a flex sibling of the canvas. When open, the canvas narrows. Never a portaled overlay."],
+    ["source-on-every-answer", "Every assistant message renders a source line (model name + version, or evidence bundle reference)."],
+    ["two-surfaces-max", "Inline + Pane. ⌘K is an accelerator, not a third surface. Floating chatbots and toggles are banned."],
+    ["graduation-path", "Inline has a 'Continue in thread' action that lifts query + anchor label into the pane. Without it, physicians re-type or lose the thread."],
+    ["neutral-chrome", "Ask triggers use neutral borders + text-muted. No accent color. Accent is reserved for CTA / active / selected."],
+    ["anchor-bound", "Inline appears next to the element the physician clicked — max 380 px wide, flips above if no room below."],
+  ];
+  return (
+    <Card>
+      <CardHeader>Hard rules</CardHeader>
+      <ul className="space-y-3">
+        {rules.map(([name, desc]) => (
+          <li key={name} className="grid grid-cols-[200px_1fr] gap-x-4 items-baseline">
+            <span className="t-label">{name}</span>
+            <span className="t-body text-text-secondary">{desc}</span>
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+}
+
