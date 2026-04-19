@@ -17,6 +17,7 @@ import { PatientBanner } from "../clinical/PatientBanner";
 import { Flowsheet } from "../clinical/Flowsheet";
 import { DomainPane } from "../clinical/DomainPane";
 import { DecisionCard } from "../clinical/DecisionCard";
+import { RiskVisceralityConcepts } from "../primitives/RiskViscerality";
 
 export default function Reference() {
   return (
@@ -36,6 +37,7 @@ export default function Reference() {
         <StateMatrixSection />
         <BannedPatternsSection />
         <ClinicalSection />
+        <RiskVisceralitySectionWrap />
       </main>
       <footer className="max-w-[1200px] mx-auto px-6 py-10 border-t border-border-subtle mt-16">
         <div className="t-meta">Meridian MD DS v1.4.2 · Locked 2026-04-18 · tokens.json is source of truth</div>
@@ -1247,3 +1249,17 @@ function AskRules() {
   );
 }
 
+
+// ───── Risk Viscerality concepts (exploration) ───────────────────────────
+
+function RiskVisceralitySectionWrap() {
+  return (
+    <Section
+      n="14"
+      title="Risk Viscerality — concepts"
+      rule="Exploration space for translating the math (ΔP, NNT, hazard ratios, QALY) into something patients and physicians actually feel. Five concepts. Each exposes a Patient view and a Physician view rendered from the SAME mock calculation — one calculation, two languages. Not yet promoted to primitives; iterating first."
+    >
+      <RiskVisceralityConcepts />
+    </Section>
+  );
+}
