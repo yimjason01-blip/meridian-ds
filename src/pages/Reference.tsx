@@ -17,7 +17,7 @@ import { PatientBanner } from "../clinical/PatientBanner";
 import { Flowsheet } from "../clinical/Flowsheet";
 import { DomainPane } from "../clinical/DomainPane";
 import { DecisionCard } from "../clinical/DecisionCard";
-import { RiskVisceralityConcepts } from "../primitives/RiskViscerality";
+
 
 export default function Reference() {
   return (
@@ -37,7 +37,6 @@ export default function Reference() {
         <StateMatrixSection />
         <BannedPatternsSection />
         <ClinicalSection />
-        <RiskVisceralitySectionWrap />
       </main>
       <footer className="max-w-[1200px] mx-auto px-6 py-10 border-t border-border-subtle mt-16">
         <div className="t-meta">Meridian MD DS v1.4.2 · Locked 2026-04-18 · tokens.json is source of truth</div>
@@ -1246,20 +1245,5 @@ function AskRules() {
         ))}
       </ul>
     </Card>
-  );
-}
-
-
-// ───── Risk communication · Milestone ladder ─────────────────────────────
-
-function RiskVisceralitySectionWrap() {
-  return (
-    <Section
-      n="14"
-      title="Risk communication · Milestone ladder"
-      rule="Translates cohort-level risk math (ΔP, NNT, hazard ratios, QALY) into something patients and physicians actually feel. Same mock calculation, two languages: toggle Patient / Physician. Domain color carries disease identity across tracks; fill style (hollow vs solid) distinguishes Without vs With Meridian. Two-stage slider (Fundamentals + Optimization) makes the effort → years-back transaction tangible and documents conditional consent."
-    >
-      <RiskVisceralityConcepts />
-    </Section>
   );
 }
