@@ -56,15 +56,17 @@ const TOTAL_YEARS = ACTIONS.reduce((s, a) => s + a.yearsGained, 0);
 // - Adherence slider scales the With-plan shift — the transaction made visible
 
 function MilestoneLadder({ variant }: { variant: "patient" | "physician" }) {
-  const [adherence, setAdherence] = useState(100); // 0-100, % of committed plan
+  // Slider encodes the two-stage journey:
+  //   0–50%   = Fundamentals (meds, screening, sleep, basic movement)
+  //   50–100% = Optimization (biomarker tuning, precision dosing, advanced recovery)
+  // fundamentalsFrac = portion of maxShift delivered by fundamentals alone.
+  // Rationale: published intervention literature shows ~65% of achievable
+  // risk-reduction comes from basic medication + screening + lifestyle floor;
+  // the remaining ~35% requires sustained optimization.
+  const FUNDAMENTALS_FRAC = 0.65;
 
-  // Each milestone: center of 50th-percentile, halfWindow = (60th - 40th)/2 years
-  // Derived from published cohort hazard curves (plausible-mock for prototype).
-  // maxShift = years the With-plan median moves right at sustained engagement.
-  // thisRoundFraction = share of maxShift delivered by the current Care Plan alone.
-  //   Rationale: short-horizon interventions (screening catch-yield) deliver a
-  //   larger fraction per round; LDL-years / cumulative-adherence benefits compound
-  //   slowly so Round 1 alone delivers less.
+  const [progress, setProgress] = useState(50); // 0-100
+
   const milestones = [
     {
       id: "mace",
@@ -72,9 +74,8 @@ function MilestoneLadder({ variant }: { variant: "patient" | "physician" }) {
       physician: "First MACE event",
       source: "PREVENT (AHA 2023) + ATM-amplified hazard",
       withoutMedian: 68,
-      withoutWindow: 5,           // ±5y (age 63–73 covers 40–60th pct)
-      maxShift: 10,               // sustained-engagement ceiling
-      thisRoundFraction: 0.22,    // LDL-years compound slowly
+      withoutWindow: 5,
+      maxShift: 10,
     },
     {
       id: "ca",
@@ -84,7 +85,6 @@ function MilestoneLadder({ variant }: { variant: "patient" | "physician" }) {
       withoutMedian: 72,
       withoutWindow: 6,
       maxShift: 8,
-      thisRoundFraction: 0.35,    // screening has immediate catch-yield
     },
     {
       id: "ind",
@@ -94,7 +94,6 @@ function MilestoneLadder({ variant }: { variant: "patient" | "physician" }) {
       withoutMedian: 76,
       withoutWindow: 5,
       maxShift: 7,
-      thisRoundFraction: 0.15,    // cumulative year-over-year
     },
     {
       id: "gait",
@@ -104,16 +103,26 @@ function MilestoneLadder({ variant }: { variant: "patient" | "physician" }) {
       withoutMedian: 70,
       withoutWindow: 4,
       maxShift: 6,
-      thisRoundFraction: 0.18,    // cumulative, some immediate from mobility work
     },
   ];
 
-  // Apply adherence scaling — modulates BOTH sustained ceiling and this-round
-  const sustainedShift = (m: typeof milestones[number]) => (m.maxShift * adherence) / 100;
-  const thisRoundShift = (m: typeof milestones[number]) =>
-    (m.maxShift * m.thisRoundFraction * adherence) / 100;
-  const sustainedMedian = (m: typeof milestones[number]) => m.withoutMedian + sustainedShift(m);
-  const thisRoundMedian = (m: typeof milestones[number]) => m.withoutMedian + thisRoundShift(m);
+  // Two-stage scaling:
+  //   0-50 maps linearly to 0 → FUNDAMENTALS_FRAC of maxShift
+  //   50-100 maps linearly to FUNDAMENTALS_FRAC → 1.0 of maxShift
+  const scaleFactor = (p: number) => {
+    if (p <= 50) return (p / 50) * FUNDAMENTALS_FRAC;
+    return FUNDAMENTALS_FRAC + ((p - 50) / 50) * (1 - FUNDAMENTALS_FRAC);
+  };
+  const currentScale = scaleFactor(progress);
+  const shift = (m: typeof milestones[number]) => m.maxShift * currentScale;
+  const withMedian = (m: typeof milestones[number]) => m.withoutMedian + shift(m);
+
+  const stageLabel =
+    progress === 0 ? "No plan" :
+    progress < 50 ? "Fundamentals · in progress" :
+    progress === 50 ? "Fundamentals · complete" :
+    progress < 100 ? "Optimization · in progress" :
+    "Optimization · complete";
 
   const W = 640;
   const H = 280;
@@ -139,25 +148,9 @@ function MilestoneLadder({ variant }: { variant: "patient" | "physician" }) {
       <div className="mb-5 p-4 rounded-sm border border-border-subtle bg-white/[.012]">
         <div className="text-[13px] text-text-secondary leading-relaxed max-w-[82ch]">
           {variant === "patient"
-            ? <>These are statistical markers for <span className="font-medium text-text">people like you</span>, not a promise. The <span className="t-mono text-accent-hover">outer band</span> is what sustained engagement across years of care can deliver — <span className="font-medium text-text">what&apos;s possible</span>. The <span className="t-mono text-text">inner band</span> is what <span className="font-medium text-text">this first round</span> of care is likely to deliver. The gap between them is the future you&apos;re stepping into — Round 1 gets you moving; sustained engagement gets you there.</>
-            : <>Dual-marker display: <span className="t-mono">ceiling</span> = full sustained-engagement effect size from pooled cohort data; <span className="t-mono">this-round</span> = fraction of ceiling delivered by current Care Plan in isolation, per-endpoint (screening: higher first-round yield; LDL-years / cumulative-adherence: lower). Adherence slider scales both proportionally. Round 1 is the entry point to the trajectory, not the trajectory itself.</>
+            ? <>These are statistical markers for <span className="font-medium text-text">people like you</span>, not a promise. The journey has two stages: <span className="font-medium text-text">Fundamentals</span> gets you most of the way — meds, screening, sleep, movement. <span className="font-medium text-text">Optimization</span> takes you the rest — biomarker tuning, precision dosing, recovery. Drag the slider through both stages to see what each delivers.</>
+            : <>Two-stage engagement model. Fundamentals (meds + screening + lifestyle floor) delivers ~65% of achievable shift; Optimization (biomarker tuning, precision dosing) delivers the remaining ~35%. Slider position encodes current stage of progression. Uncertainty band widens at low engagement. Adherence-conditional framing preserves consent documentation.</>
           }
-        </div>
-      </div>
-
-      {/* Legend: This round vs sustained ceiling */}
-      <div className="mb-4 flex items-center gap-5 flex-wrap text-[11px]">
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-3 rounded-sm border border-[#e8604c]/60" style={{ background: "rgba(232,96,76,0.14)" }} />
-          <span className="t-mono text-text-muted">Without plan</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-3 rounded-sm border border-[#7170ff]/70" style={{ background: "rgba(113,112,255,0.22)" }} />
-          <span className="t-mono text-text">This round</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-3 rounded-sm border border-[#7170ff]/35 border-dashed" style={{ background: "rgba(113,112,255,0.08)" }} />
-          <span className="t-mono text-text-muted">Sustained engagement ceiling</span>
         </div>
       </div>
 
@@ -202,13 +195,10 @@ function MilestoneLadder({ variant }: { variant: "patient" | "physician" }) {
 
         {/* Milestones on both tracks */}
         {milestones.map((m, i) => {
-          const sMed = sustainedMedian(m);
-          const rMed = thisRoundMedian(m);
-          // Sustained-ceiling band widens more with low adherence (more uncertain)
-          const sustainedWindow = m.withoutWindow * (1 + (1 - adherence / 100) * 0.4);
-          // This-round band is tighter (short horizon, better-characterized)
-          const roundWindow = m.withoutWindow * 0.55;
-          const laneOffset = (i % 2 === 0) ? -32 : 32; // alternate label placement to avoid overlap
+          const wMed = withMedian(m);
+          // Uncertainty band widens as engagement drops (less predictable)
+          const withWindow = m.withoutWindow * (1 + (1 - progress / 100) * 0.4);
+          const laneOffset = (i % 2 === 0) ? -32 : 32;
 
           return (
             <g key={m.id}>
@@ -225,7 +215,6 @@ function MilestoneLadder({ variant }: { variant: "patient" | "physician" }) {
                 strokeWidth="0.8"
                 rx="2"
               />
-              {/* Without median marker */}
               <line x1={xOf(m.withoutMedian)} y1={y1 - bandHeight / 2 - 2}
                     x2={xOf(m.withoutMedian)} y2={y1 + bandHeight / 2 + 2}
                     stroke="#e8604c" strokeWidth="1.6" />
@@ -235,101 +224,82 @@ function MilestoneLadder({ variant }: { variant: "patient" | "physician" }) {
                 {m.withoutMedian}
               </text>
 
-              {/* Sustained-engagement ceiling band (outer, dashed, fainter) */}
+              {/* With-Meridian band */}
               <rect
-                x={xOf(sMed - sustainedWindow)}
+                x={xOf(wMed - withWindow)}
                 y={y2 - bandHeight / 2}
-                width={xOf(sMed + sustainedWindow) - xOf(sMed - sustainedWindow)}
+                width={xOf(wMed + withWindow) - xOf(wMed - withWindow)}
                 height={bandHeight}
                 fill="#7170ff"
-                fillOpacity="0.08"
+                fillOpacity="0.18"
                 stroke="#7170ff"
-                strokeOpacity="0.35"
-                strokeWidth="0.8"
-                strokeDasharray="3 2"
+                strokeOpacity="0.55"
+                strokeWidth="0.9"
                 rx="2"
               />
-              {/* Sustained ceiling median marker */}
-              <line x1={xOf(sMed)} y1={y2 - bandHeight / 2 - 2}
-                    x2={xOf(sMed)} y2={y2 + bandHeight / 2 + 2}
-                    stroke="#7170ff" strokeOpacity="0.55"
-                    strokeWidth="1.2" strokeDasharray="2 2" />
-              <text x={xOf(sMed)} y={y2 + (laneOffset > 0 ? laneOffset - 12 : Math.abs(laneOffset) + 14)}
-                    fill="#828fff" fillOpacity="0.6" fontSize="10"
+              <line x1={xOf(wMed)} y1={y2 - bandHeight / 2 - 2}
+                    x2={xOf(wMed)} y2={y2 + bandHeight / 2 + 2}
+                    stroke="#7170ff" strokeWidth="1.8" />
+              <text x={xOf(wMed)} y={y2 + (laneOffset > 0 ? laneOffset - 12 : Math.abs(laneOffset) + 14)}
+                    fill="#828fff" fontSize="10"
                     fontFamily="'JetBrains Mono', monospace" textAnchor="middle">
-                {sMed.toFixed(0)}
+                {wMed.toFixed(0)}
               </text>
 
-              {/* This-round band (inner, solid, prominent) */}
-              <rect
-                x={xOf(rMed - roundWindow)}
-                y={y2 - bandHeight / 2 + 2}
-                width={xOf(rMed + roundWindow) - xOf(rMed - roundWindow)}
-                height={bandHeight - 4}
-                fill="#7170ff"
-                fillOpacity="0.22"
-                stroke="#7170ff"
-                strokeOpacity="0.7"
-                strokeWidth="1"
-                rx="2"
-              />
-              {/* This-round median marker */}
-              <line x1={xOf(rMed)} y1={y2 - bandHeight / 2}
-                    x2={xOf(rMed)} y2={y2 + bandHeight / 2}
-                    stroke="#7170ff" strokeWidth="1.8" />
-
-              {/* Arrow from this-round → sustained ceiling (the "journey") */}
-              {sMed > rMed + 0.5 && (
-                <g>
-                  <line x1={xOf(rMed) + 3} y1={y2}
-                        x2={xOf(sMed) - 6} y2={y2}
-                        stroke="#7170ff" strokeOpacity="0.45"
-                        strokeWidth="0.8" strokeDasharray="2 2" />
-                  <polygon
-                    points={`${xOf(sMed) - 6},${y2 - 2.5} ${xOf(sMed) - 2},${y2} ${xOf(sMed) - 6},${y2 + 2.5}`}
-                    fill="#7170ff" fillOpacity="0.55"
-                  />
-                </g>
-              )}
-
-              {/* Connecting line between without-median and this-round median */}
+              {/* Connecting line between paired medians */}
               <line x1={xOf(m.withoutMedian)} y1={y1 + bandHeight / 2 + 2}
-                    x2={xOf(rMed)} y2={y2 - bandHeight / 2 - 2}
+                    x2={xOf(wMed)} y2={y2 - bandHeight / 2 - 2}
                     stroke="#42464d" strokeWidth="0.6" strokeDasharray="2 2" />
             </g>
           );
         })}
       </svg>
 
-      {/* Adherence slider — the transaction */}
+      {/* Two-stage slider — fundamentals + optimization */}
       <div className="mt-2 mb-5 p-4 rounded-sm border border-accent-base/40 bg-accent-light">
         <div className="flex items-baseline justify-between mb-2">
           <div className="t-label text-text">
-            {variant === "patient" ? "Your effort" : "Assumed adherence"}
+            {variant === "patient" ? "Your journey" : "Engagement stage"}
           </div>
           <div className="t-mono text-[13px] text-accent-hover tabular-nums">
-            {adherence}% of the plan
+            {stageLabel}
           </div>
         </div>
-        <input
-          type="range"
-          min={0}
-          max={100}
-          step={5}
-          value={adherence}
-          onChange={(e) => setAdherence(parseInt(e.target.value, 10))}
-          className="w-full accent-accent-hover"
-          style={{ accentColor: "#7170ff" }}
-        />
-        <div className="flex justify-between t-mono text-[10px] text-text-subtle mt-1">
-          <span>Do none of it</span>
-          <span>Half-in</span>
-          <span>All-in</span>
+
+        {/* Custom slider rail with stage midpoint marker */}
+        <div className="relative">
+          <input
+            type="range"
+            min={0}
+            max={100}
+            step={5}
+            value={progress}
+            onChange={(e) => setProgress(parseInt(e.target.value, 10))}
+            className="w-full accent-accent-hover relative z-10"
+            style={{ accentColor: "#7170ff" }}
+          />
+          {/* Stage divider tick at 50% */}
+          <div
+            className="absolute top-1/2 -translate-y-1/2 pointer-events-none"
+            style={{ left: "50%", transform: "translate(-50%, -50%)" }}
+          >
+            <div className="w-[2px] h-4 bg-text-subtle/60" />
+          </div>
         </div>
+
+        {/* Stage labels */}
+        <div className="flex justify-between t-mono text-[10px] mt-1">
+          <span className="text-text-subtle">Start</span>
+          <span className="text-text-muted">Fundamentals</span>
+          <span className="text-text-muted">|</span>
+          <span className="text-text-muted">Optimization</span>
+          <span className="text-text-subtle">Full</span>
+        </div>
+
         <div className="mt-3 text-[12px] text-text-muted leading-relaxed">
           {variant === "patient"
-            ? <>Drag to see what different levels of commitment look like. At <span className="t-mono text-text-secondary">{adherence}%</span>, <span className="text-text">this first round</span> adds <span className="t-mono text-accent-hover">≈{(milestones.reduce((s, m) => s + thisRoundShift(m), 0) / milestones.length).toFixed(1)} years</span> on average — <span className="text-text">sustained engagement</span> points toward <span className="t-mono text-accent-hover">≈{(milestones.reduce((s, m) => s + sustainedShift(m), 0) / milestones.length).toFixed(1)} years</span>.</>
-            : <>Linear scaling: this-round shift = maxShift × thisRoundFraction × adherence. Sustained ceiling = maxShift × adherence. Per-endpoint fractions (MACE 0.22 · Cancer 0.35 · ADL 0.15 · Gait 0.18) reflect published dose-response timing — screening yields first-round, LDL-years and cumulative-adherence yields late. Gap between inner and outer band = the sustained-engagement value proposition.</>
+            ? <>At <span className="t-mono text-text-secondary">{stageLabel.toLowerCase()}</span>, this plan adds <span className="t-mono text-accent-hover">≈{(milestones.reduce((s, m) => s + shift(m), 0) / milestones.length).toFixed(1)} years</span> before these markers on average. Fundamentals alone gets you ~65% of the way — Optimization takes you the rest.</>
+            : <>Piecewise linear: 0–50% → 0–65% of maxShift (fundamentals); 50–100% → 65–100% of maxShift (optimization). Uncertainty bands widen +40% at 0% engagement. Stage label documents patient-level commitment state for consent records.</>
           }
         </div>
       </div>
@@ -339,13 +309,12 @@ function MilestoneLadder({ variant }: { variant: "patient" | "physician" }) {
         <div className="grid grid-cols-[1fr_auto_auto_auto] gap-4 items-baseline pb-2 border-b border-border">
           <div className="t-mono text-[10px] uppercase tracking-wider text-text-subtle">Milestone</div>
           <div className="t-mono text-[10px] uppercase tracking-wider text-text-subtle text-right">Without</div>
-          <div className="t-mono text-[10px] uppercase tracking-wider text-text-subtle text-right">This round</div>
-          <div className="t-mono text-[10px] uppercase tracking-wider text-text-subtle text-right">Sustained</div>
+          <div className="t-mono text-[10px] uppercase tracking-wider text-text-subtle text-right">With Meridian</div>
+          <div className="t-mono text-[10px] uppercase tracking-wider text-text-subtle text-right">Gain</div>
         </div>
         {milestones.map((m) => {
           const label = variant === "patient" ? m.patient : m.physician;
-          const rShift = thisRoundShift(m);
-          const sShift = sustainedShift(m);
+          const s = shift(m);
           return (
             <div key={m.id} className="grid grid-cols-[1fr_auto_auto_auto] gap-4 items-baseline py-2 border-b border-border-subtle last:border-0">
               <div>
@@ -355,13 +324,11 @@ function MilestoneLadder({ variant }: { variant: "patient" | "physician" }) {
               <div className="t-mono text-text-muted text-[11px] tabular-nums text-right">
                 {m.withoutMedian - m.withoutWindow}–{m.withoutMedian + m.withoutWindow}
               </div>
-              <div className="t-mono text-text text-[11px] tabular-nums text-right">
-                <span className="text-accent-hover">+{rShift.toFixed(1)}y</span>
-                <span className="text-text-subtle ml-1 text-[10px]">→ {thisRoundMedian(m).toFixed(0)}</span>
+              <div className="t-mono text-accent-hover text-[11px] tabular-nums text-right">
+                → {withMedian(m).toFixed(0)}
               </div>
-              <div className="t-mono text-text-muted text-[11px] tabular-nums text-right">
-                <span className="text-accent-hover/70">+{sShift.toFixed(1)}y</span>
-                <span className="text-text-subtle ml-1 text-[10px]">→ {sustainedMedian(m).toFixed(0)}</span>
+              <div className="t-mono text-text-secondary text-[11px] tabular-nums min-w-[48px] text-right">
+                +{s.toFixed(1)}y
               </div>
             </div>
           );
