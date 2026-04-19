@@ -1250,14 +1250,14 @@ function AskRules() {
 }
 
 
-// ───── Risk Viscerality concepts (exploration) ───────────────────────────
+// ───── Risk communication · Milestone ladder ─────────────────────────────
 
 function RiskVisceralitySectionWrap() {
   return (
     <Section
       n="14"
-      title="Risk Viscerality — concepts"
-      rule="Exploration space for translating the math (ΔP, NNT, hazard ratios, QALY) into something patients and physicians actually feel. Five concepts. Each exposes a Patient view and a Physician view rendered from the SAME mock calculation — one calculation, two languages. Not yet promoted to primitives; iterating first."
+      title="Risk communication · Milestone ladder"
+      rule="Translates cohort-level risk math (ΔP, NNT, hazard ratios, QALY) into something patients and physicians actually feel. Same mock calculation, two languages: toggle Patient / Physician. Domain color carries disease identity across tracks; fill style (hollow vs solid) distinguishes Without vs With Meridian. Two-stage slider (Fundamentals + Optimization) makes the effort → years-back transaction tangible and documents conditional consent."
     >
       <RiskVisceralityConcepts />
     </Section>
