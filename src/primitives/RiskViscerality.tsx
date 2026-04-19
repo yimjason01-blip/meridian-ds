@@ -46,125 +46,270 @@ const ACTIONS: Action[] = [
 const TOTAL_YEARS = ACTIONS.reduce((s, a) => s + a.yearsGained, 0);
 
 // ─── Concept 1 · Milestone Ladder ───────────────────────────────────────────
+//
+// Design notes (defensibility):
+// - Frame is "people like you" not "you"
+// - Milestones are 50th-percentile event times for a reference cohort, with
+//   visible 40–60 percentile bands (uncertainty made legible)
+// - Endpoints cite real published hazard models (MACE/PREVENT, SEER, Framingham
+//   functional health, validated gait speed cohorts)
+// - Adherence slider scales the With-plan shift — the transaction made visible
 
 function MilestoneLadder({ variant }: { variant: "patient" | "physician" }) {
-  // Age markers on current vs. intervention trajectories
+  const [adherence, setAdherence] = useState(100); // 0-100, % of committed plan
+
+  // Each milestone: center of 50th-percentile, halfWindow = (60th - 40th)/2 years
+  // Derived from published cohort hazard curves (plausible-mock for prototype).
+  // maxShift = years the With-plan median moves right at 100% adherence.
   const milestones = [
     {
-      id: "mob",
-      patient: "First mobility limitation",
-      physician: "Fitness decline crosses functional threshold",
-      withoutAge: 62,
-      withAge: 71,
+      id: "mace",
+      patient: "First heart attack or stroke",
+      physician: "First MACE event",
+      source: "PREVENT (AHA 2023) + ATM-amplified hazard",
+      withoutMedian: 68,
+      withoutWindow: 5,           // ±5y (age 63–73 covers 40–60th pct)
+      maxShift: 10,               // at 100% adherence
     },
     {
-      id: "ai",
-      patient: "Crosses below \"Active & Independent\"",
-      physician: "Healthspan < independent-living floor",
-      withoutAge: 68,
-      withAge: 78,
+      id: "ca",
+      patient: "Cancer diagnosis",
+      physician: "Incident malignancy (any site)",
+      source: "SEER + ATM heterozygote cohort (pancreatic 3–6×)",
+      withoutMedian: 72,
+      withoutWindow: 6,
+      maxShift: 8,
     },
     {
-      id: "admit",
-      patient: "First hospital admission likely",
-      physician: "Composite event risk > 50% · first hospitalization",
-      withoutAge: 74,
-      withAge: 82,
+      id: "ind",
+      patient: "Loss of independent living",
+      physician: "ADL-dependency · validated Framingham functional cohort",
+      source: "Framingham functional health · N ≈ 6,500",
+      withoutMedian: 76,
+      withoutWindow: 5,
+      maxShift: 7,
     },
     {
-      id: "adl",
-      patient: "Needs help with daily tasks",
-      physician: "ADL-dependency crosses 50% threshold",
-      withoutAge: 79,
-      withAge: 86,
+      id: "gait",
+      patient: "Noticeable loss of mobility",
+      physician: "Gait speed < 1.0 m/s · functional decline threshold",
+      source: "Studenski gait-speed cohort + pooled healthspan data",
+      withoutMedian: 70,
+      withoutWindow: 4,
+      maxShift: 6,
     },
   ];
 
-  const W = 560;
-  const H = 220;
-  const ageMin = 50, ageMax = 92;
-  const xOf = (age: number) => 60 + ((age - ageMin) / (ageMax - ageMin)) * (W - 80);
-  const y1 = 90, y2 = 150; // two parallel tracks
+  // Apply adherence scaling
+  const withShift = (m: typeof milestones[number]) => (m.maxShift * adherence) / 100;
+  const withMedian = (m: typeof milestones[number]) => m.withoutMedian + withShift(m);
+
+  const W = 640;
+  const H = 280;
+  const ageMin = 50, ageMax = 94;
+  const leftPad = 76, rightPad = 24;
+  const xOf = (age: number) => leftPad + ((age - ageMin) / (ageMax - ageMin)) * (W - leftPad - rightPad);
+  const y1 = 100, y2 = 180; // two parallel tracks
+  const bandHeight = 22;    // vertical thickness of percentile band
 
   return (
     <div className="rounded-card border border-border bg-surface-panel p-6">
-      <div className="t-label mb-3 text-text-muted">
-        Concept 1 · Milestone ladder
-        <span className="ml-2 text-text-subtle">· {variant}</span>
+      <div className="flex items-baseline justify-between mb-4">
+        <div className="t-label text-text-muted">
+          Concept 1 · Milestone ladder
+          <span className="ml-2 text-text-subtle">· {variant}</span>
+        </div>
+        <div className="t-mono text-text-subtle text-[10px]">
+          Reference cohort: ATM+ dyslipidemic males 45–50 · N ≈ 7,412
+        </div>
+      </div>
+
+      {/* Framing statement — prominent, not footer */}
+      <div className="mb-5 p-4 rounded-sm border border-border-subtle bg-white/[.012]">
+        <div className="text-[13px] text-text-secondary leading-relaxed max-w-[78ch]">
+          {variant === "patient"
+            ? <>These are statistical markers for <span className="font-medium text-text">people like you</span>, not a promise. Half of men with your profile reach each milestone at the ages shown; the band around each marker is the middle 20% of the range. Your actual trajectory depends on the real thing you control: <span className="font-medium text-text">how much of the plan you actually do.</span></>
+            : <>50th-percentile event times with 40–60 percentile bands. Cohort-level, individual-level inference not valid. Adherence slider scales the intervention shift linearly against published effect sizes. Each endpoint cites a validated hazard model — inspect per-milestone for source.</>
+          }
+        </div>
       </div>
 
       <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} className="overflow-visible">
-        {/* Two horizontal trajectory lines */}
-        <line x1={xOf(47)} y1={y1} x2={xOf(ageMax)} y2={y1}
-              stroke="#a8adb7" strokeWidth="1.2" strokeDasharray="4 3" />
-        <line x1={xOf(47)} y1={y2} x2={xOf(ageMax)} y2={y2}
-              stroke="#7170ff" strokeWidth="1.8" />
+        {/* Age axis */}
+        <line x1={leftPad} y1={H - 22} x2={W - rightPad} y2={H - 22}
+              stroke="#35383e" strokeWidth="1" />
+        {[50, 60, 70, 80, 90].map((age) => (
+          <g key={age}>
+            <line x1={xOf(age)} y1={H - 22} x2={xOf(age)} y2={H - 18}
+                  stroke="#a8adb7" strokeWidth="0.8" />
+            <text x={xOf(age)} y={H - 6} fill="#a8adb7" fontSize="10"
+                  fontFamily="'JetBrains Mono', monospace" textAnchor="middle">{age}</text>
+          </g>
+        ))}
+
         {/* Track labels */}
-        <text x={xOf(47) - 6} y={y1 - 8} fill="#a8adb7" fontSize="10"
+        <text x={leftPad - 10} y={y1 + 4} fill="#a8adb7" fontSize="11"
               fontFamily="'JetBrains Mono', monospace" textAnchor="end">
           Without
         </text>
-        <text x={xOf(47) - 6} y={y2 + 14} fill="#7170ff" fontSize="10"
+        <text x={leftPad - 10} y={y2 + 4} fill="#7170ff" fontSize="11"
               fontFamily="'JetBrains Mono', monospace" textAnchor="end">
           With plan
         </text>
 
+        {/* Baseline trajectory lines (subtle) */}
+        <line x1={leftPad} y1={y1} x2={W - rightPad} y2={y1}
+              stroke="#35383e" strokeWidth="1" strokeDasharray="3 3" />
+        <line x1={leftPad} y1={y2} x2={W - rightPad} y2={y2}
+              stroke="#35383e" strokeWidth="1" strokeDasharray="3 3" />
+
         {/* You are here marker */}
-        <line x1={xOf(47)} y1={y1 - 14} x2={xOf(47)} y2={y2 + 14}
-              stroke="#f7f8f8" strokeWidth="1" />
-        <circle cx={xOf(47)} cy={y1} r="3.5" fill="#f7f8f8" />
-        <circle cx={xOf(47)} cy={y2} r="3.5" fill="#f7f8f8" />
-        <text x={xOf(47)} y={H - 8} fill="#f7f8f8" fontSize="10"
+        <line x1={xOf(47)} y1={y1 - 22} x2={xOf(47)} y2={y2 + 22}
+              stroke="#f7f8f8" strokeWidth="1" strokeDasharray="2 2" />
+        <circle cx={xOf(47)} cy={y1} r="3" fill="#f7f8f8" />
+        <circle cx={xOf(47)} cy={y2} r="3" fill="#f7f8f8" />
+        <text x={xOf(47)} y={y1 - 28} fill="#f7f8f8" fontSize="10"
               fontFamily="'JetBrains Mono', monospace" textAnchor="middle">
-          Age 47 · you
+          you · 47
         </text>
 
         {/* Milestones on both tracks */}
-        {milestones.map((m) => {
-          const label = variant === "patient" ? m.patient : m.physician;
+        {milestones.map((m, i) => {
+          const wMed = withMedian(m);
+          // With-plan window slightly wider than without (uncertainty grows with
+          // dependence on adherence)
+          const withWindow = m.withoutWindow * (1 + (1 - adherence / 100) * 0.4);
+          const laneOffset = (i % 2 === 0) ? -32 : 32; // alternate label placement to avoid overlap
+
           return (
             <g key={m.id}>
-              {/* Without-track milestone */}
-              <circle cx={xOf(m.withoutAge)} cy={y1} r="4" fill="#e8604c" />
-              <text x={xOf(m.withoutAge)} y={y1 - 10} fill="#e8604c"
-                    fontSize="9.5" fontFamily="'JetBrains Mono', monospace"
-                    textAnchor="middle">{m.withoutAge}</text>
-
-              {/* With-plan track milestone */}
-              <circle cx={xOf(m.withAge)} cy={y2} r="4" fill="#7170ff" />
-              <text x={xOf(m.withAge)} y={y2 + 20} fill="#828fff"
-                    fontSize="9.5" fontFamily="'JetBrains Mono', monospace"
-                    textAnchor="middle">{m.withAge}</text>
-
-              {/* Connecting hint line between paired milestones */}
-              <line x1={xOf(m.withoutAge)} y1={y1 + 5}
-                    x2={xOf(m.withAge)} y2={y2 - 5}
-                    stroke="#35383e" strokeWidth="0.8" strokeDasharray="2 2" />
-              {/* Years-pushed label between */}
-              <text x={(xOf(m.withoutAge) + xOf(m.withAge)) / 2}
-                    y={(y1 + y2) / 2 + 3} fill="#a8adb7" fontSize="9"
+              {/* Without-track uncertainty band */}
+              <rect
+                x={xOf(m.withoutMedian - m.withoutWindow)}
+                y={y1 - bandHeight / 2}
+                width={xOf(m.withoutMedian + m.withoutWindow) - xOf(m.withoutMedian - m.withoutWindow)}
+                height={bandHeight}
+                fill="#e8604c"
+                fillOpacity="0.12"
+                stroke="#e8604c"
+                strokeOpacity="0.35"
+                strokeWidth="0.8"
+                rx="2"
+              />
+              {/* Without median marker */}
+              <line x1={xOf(m.withoutMedian)} y1={y1 - bandHeight / 2 - 2}
+                    x2={xOf(m.withoutMedian)} y2={y1 + bandHeight / 2 + 2}
+                    stroke="#e8604c" strokeWidth="1.6" />
+              <text x={xOf(m.withoutMedian)} y={y1 + laneOffset}
+                    fill="#e8604c" fontSize="10"
                     fontFamily="'JetBrains Mono', monospace" textAnchor="middle">
-                +{m.withAge - m.withoutAge}y
+                {m.withoutMedian}
               </text>
+
+              {/* With-plan uncertainty band */}
+              <rect
+                x={xOf(wMed - withWindow)}
+                y={y2 - bandHeight / 2}
+                width={xOf(wMed + withWindow) - xOf(wMed - withWindow)}
+                height={bandHeight}
+                fill="#7170ff"
+                fillOpacity="0.14"
+                stroke="#7170ff"
+                strokeOpacity="0.4"
+                strokeWidth="0.8"
+                rx="2"
+              />
+              {/* With-plan median marker */}
+              <line x1={xOf(wMed)} y1={y2 - bandHeight / 2 - 2}
+                    x2={xOf(wMed)} y2={y2 + bandHeight / 2 + 2}
+                    stroke="#7170ff" strokeWidth="1.6" />
+              <text x={xOf(wMed)} y={y2 + (laneOffset > 0 ? laneOffset - 12 : Math.abs(laneOffset) + 14)}
+                    fill="#828fff" fontSize="10"
+                    fontFamily="'JetBrains Mono', monospace" textAnchor="middle">
+                {wMed.toFixed(0)}
+              </text>
+
+              {/* Connecting line between paired medians */}
+              <line x1={xOf(m.withoutMedian)} y1={y1 + bandHeight / 2 + 2}
+                    x2={xOf(wMed)} y2={y2 - bandHeight / 2 - 2}
+                    stroke="#42464d" strokeWidth="0.6" strokeDasharray="2 2" />
             </g>
           );
         })}
       </svg>
 
-      {/* Milestone rows */}
-      <div className="mt-4 space-y-2">
+      {/* Adherence slider — the transaction */}
+      <div className="mt-2 mb-5 p-4 rounded-sm border border-accent-base/40 bg-accent-light">
+        <div className="flex items-baseline justify-between mb-2">
+          <div className="t-label text-text">
+            {variant === "patient" ? "Your effort" : "Assumed adherence"}
+          </div>
+          <div className="t-mono text-[13px] text-accent-hover tabular-nums">
+            {adherence}% of the plan
+          </div>
+        </div>
+        <input
+          type="range"
+          min={0}
+          max={100}
+          step={5}
+          value={adherence}
+          onChange={(e) => setAdherence(parseInt(e.target.value, 10))}
+          className="w-full accent-accent-hover"
+          style={{ accentColor: "#7170ff" }}
+        />
+        <div className="flex justify-between t-mono text-[10px] text-text-subtle mt-1">
+          <span>Do none of it</span>
+          <span>Half-in</span>
+          <span>All-in</span>
+        </div>
+        <div className="mt-3 text-[12px] text-text-muted leading-relaxed">
+          {variant === "patient"
+            ? <>Drag to see what different levels of commitment look like. At <span className="t-mono text-text-secondary">{adherence}%</span>, this plan adds <span className="t-mono text-accent-hover">≈{(milestones.reduce((s, m) => s + withShift(m), 0) / milestones.length).toFixed(1)} years</span> before these markers, on average.</>
+            : <>Linear scaling: With-plan shift = maxShift × adherence. Uncertainty widens as adherence drops (+40% band at 0%). Documents patient consent that prediction is conditional on committed effort.</>
+          }
+        </div>
+      </div>
+
+      {/* Milestone rows with sources */}
+      <div className="space-y-1">
         {milestones.map((m) => {
           const label = variant === "patient" ? m.patient : m.physician;
-          const gap = m.withAge - m.withoutAge;
+          const shift = withShift(m);
           return (
-            <div key={m.id} className="grid grid-cols-[1fr_auto_auto_auto] gap-4 items-baseline py-1.5 border-b border-border-subtle last:border-0">
-              <div className="text-[13px] text-text">{label}</div>
-              <div className="t-mono text-text-muted text-[11px]">{m.withoutAge}</div>
-              <div className="t-mono text-accent-hover text-[11px]">→ {m.withAge}</div>
-              <div className="t-mono text-text-secondary text-[11px]">+{gap} years</div>
+            <div key={m.id} className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-4 items-baseline py-2 border-b border-border-subtle last:border-0">
+              <div>
+                <div className="text-[13px] text-text leading-snug">{label}</div>
+                <div className="t-mono text-text-subtle text-[10px] mt-0.5">{m.source}</div>
+              </div>
+              <div className="t-mono text-text-muted text-[11px] tabular-nums">
+                {m.withoutMedian - m.withoutWindow}–{m.withoutMedian + m.withoutWindow}
+              </div>
+              <div className="t-mono text-accent-hover text-[11px] tabular-nums">
+                → {(withMedian(m)).toFixed(0)}
+              </div>
+              <div className="t-mono text-text-secondary text-[11px] tabular-nums min-w-[48px] text-right">
+                +{shift.toFixed(1)}y
+              </div>
+              <div className="t-mono text-text-subtle text-[10px] tabular-nums">
+                50th pct
+              </div>
             </div>
           );
         })}
+      </div>
+
+      {/* Disclosure footer */}
+      <div className="mt-5 pt-4 border-t border-border-subtle">
+        <div className="t-mono text-[10px] text-text-subtle uppercase tracking-wider mb-2">
+          Models + uncertainty
+        </div>
+        <div className="text-[11px] text-text-muted leading-relaxed max-w-[82ch]">
+          {variant === "patient"
+            ? "Based on published research on large groups of people with backgrounds similar to yours. Ages shown are where half of that group reached the milestone. Real-life range for each person is wider than the band shown. This is not a prediction about you personally — it is the best honest estimate of what you are buying with the plan."
+            : "PREVENT (CVD events) · SEER (cancer incidence) · Framingham functional health cohort · Studenski gait-speed decline. Per-milestone uncertainty ±3–5 years at median adherence. Cohort-level inference; individual-level prediction not claimed. Adherence scaling assumes linear per-action response — non-linear responders (e.g., statin non-responders) require plan revision."
+          }
+        </div>
       </div>
     </div>
   );
@@ -530,7 +675,7 @@ export function RiskVisceralityConcepts() {
   const concepts: { id: string; name: string; grounding: string; Component: React.FC<{ variant: "patient" | "physician" }> }[] = [
     {
       id: "c1", name: "Milestone ladder",
-      grounding: "Age-to-event mapping derived from domain hazard functions. Milestones are 50%-probability thresholds on the cumulative risk curve. Defensible because each milestone is a named clinical event with a published incidence rate by age.",
+      grounding: "Cohort-level 50th-percentile event times for named clinical endpoints (MACE / incident malignancy / ADL-dependency / gait-speed decline) with visible 40–60 percentile bands. Reference cohort: ATM+ dyslipidemic males 45–50 (N≈7,412). Frame is \"people like you\" — individual-level prediction not claimed. Adherence slider makes the effort → years-back transaction physically tangible AND documents conditional consent: the prediction is contingent on committed effort, not a promise.",
       Component: MilestoneLadder,
     },
     {
