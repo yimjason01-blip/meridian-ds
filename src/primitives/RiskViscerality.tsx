@@ -155,7 +155,7 @@ function MilestoneLadder({ variant }: { variant: "patient" | "physician" }) {
         <div className="text-[13px] text-text-secondary leading-relaxed max-w-[82ch]">
           {variant === "patient"
             ? <>These are statistical markers for <span className="font-medium text-text">people like you</span>, not a promise. The journey has two stages: <span className="font-medium text-text">Fundamentals</span> gets you most of the way — meds, screening, sleep, movement. <span className="font-medium text-text">Optimization</span> adds further gains that some patients achieve with sustained precision care. Drag the slider through both stages to see what each delivers.</>
-            : <>Two-stage engagement model. Fundamentals (meds + screening + lifestyle floor) delivers ~65% of achievable shift; Optimization (biomarker tuning, precision dosing) adds the remaining ~35% in patients with sustained precision care. Slider position encodes current stage of progression. Uncertainty band widens at low engagement. Adherence-conditional framing preserves consent documentation.</>
+            : <>Two-stage engagement model. Fundamentals (meds + screening + lifestyle floor) delivers ~65% of achievable shift; Optimization (biomarker tuning, precision dosing) adds the remaining ~35% in patients with sustained precision care. Slider position encodes current stage of progression. At progress=0, With-Meridian band coincides with Without (no claimed shift, no added uncertainty); uncertainty widens proportionally with claimed shift magnitude. Adherence-conditional framing preserves consent documentation.</>
           }
         </div>
       </div>
@@ -214,7 +214,12 @@ function MilestoneLadder({ variant }: { variant: "patient" | "physician" }) {
         {/* Milestones stacked by lane, colored by domain */}
         {milestones.map((m, i) => {
           const wMed = withMedian(m);
-          const withWindow = m.withoutWindow * (1 + (1 - progress / 100) * 0.4);
+          // Uncertainty about the With-Meridian shift grows with the MAGNITUDE of
+          // the claimed shift. At progress=0 (no plan, no claim), with-band = without-band.
+          // At progress=100 (full claimed shift), with-band widens +30% to reflect
+          // larger extrapolation uncertainty.
+          const shiftFraction = m.maxShift > 0 ? shift(m) / m.maxShift : 0;
+          const withWindow = m.withoutWindow * (1 + shiftFraction * 0.3);
           const yLane1 = y1 + laneYOffset(i);
           const yLane2 = y2 + laneYOffset(i);
 
