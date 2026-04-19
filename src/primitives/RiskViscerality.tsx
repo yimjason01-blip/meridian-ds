@@ -129,14 +129,15 @@ function MilestoneLadder({ variant }: { variant: "patient" | "physician" }) {
     "Optimization · complete";
 
   const W = 640;
-  const H = 300;
+  const H = 340;
   const ageMin = 50, ageMax = 94;
   const leftPad = 76, rightPad = 24;
   const xOf = (age: number) => leftPad + ((age - ageMin) / (ageMax - ageMin)) * (W - leftPad - rightPad);
-  const y1 = 100, y2 = 200;       // two parallel tracks — wider gap for 4-lane stacking
-  const laneSpacing = 8;           // vertical spacing between milestone lanes within a track
-  const bandHeight = 11;           // vertical thickness of percentile band (smaller for stacking)
-  const laneYOffset = (i: number) => (i - 1.5) * laneSpacing; // -12, -4, +4, +12 for 4 items
+  const y1 = 110, y2 = 230;        // two parallel tracks — 120px gap
+  const laneSpacing = 14;           // vertical spacing between milestone lanes within a track
+  const bandHeight = 10;            // vertical thickness of percentile band
+  // Centers at -21, -7, +7, +21 (spacing 14); band edges ±5 → clean 4px gaps
+  const laneYOffset = (i: number) => (i - 1.5) * laneSpacing;
 
   return (
     <div className="rounded-card border border-border bg-surface-panel p-6">
@@ -185,28 +186,28 @@ function MilestoneLadder({ variant }: { variant: "patient" | "physician" }) {
           </g>
         ))}
 
-        {/* Track labels */}
-        <text x={leftPad - 10} y={y1 + 4} fill="#a8adb7" fontSize="11"
+        {/* Track labels — above each track stack */}
+        <text x={leftPad - 10} y={y1 - 34} fill="#a8adb7" fontSize="11"
               fontFamily="'JetBrains Mono', monospace" textAnchor="end">
           Without
         </text>
-        <text x={leftPad - 10} y={y2 + 4} fill="#f7f8f8" fontSize="11"
+        <text x={leftPad - 10} y={y2 - 34} fill="#f7f8f8" fontSize="11"
               fontFamily="'JetBrains Mono', monospace" textAnchor="end">
           With Meridian
         </text>
 
-        {/* Baseline trajectory lines (subtle) */}
+        {/* Baseline trajectory lines (subtle) — drawn at track center */}
         <line x1={leftPad} y1={y1} x2={W - rightPad} y2={y1}
               stroke="#35383e" strokeWidth="1" strokeDasharray="3 3" />
         <line x1={leftPad} y1={y2} x2={W - rightPad} y2={y2}
               stroke="#35383e" strokeWidth="1" strokeDasharray="3 3" />
 
-        {/* You are here marker */}
+        {/* You are here marker — brackets each full track stack */}
         <line x1={xOf(47)} y1={y1 - 30} x2={xOf(47)} y2={y2 + 30}
               stroke="#f7f8f8" strokeWidth="1" strokeDasharray="2 2" />
         <circle cx={xOf(47)} cy={y1} r="3" fill="#f7f8f8" />
         <circle cx={xOf(47)} cy={y2} r="3" fill="#f7f8f8" />
-        <text x={xOf(47)} y={y1 - 36} fill="#f7f8f8" fontSize="10"
+        <text x={xOf(47)} y={y1 - 50} fill="#f7f8f8" fontSize="10"
               fontFamily="'JetBrains Mono', monospace" textAnchor="middle">
           you · 47
         </text>
