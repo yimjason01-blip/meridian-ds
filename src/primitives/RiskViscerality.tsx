@@ -76,6 +76,7 @@ function MilestoneLadder({ variant }: { variant: "patient" | "physician" }) {
       withoutMedian: 68,
       withoutWindow: 5,
       maxShift: 10,
+      color: "#e8604c",           // cardiac — orange-red
     },
     {
       id: "ca",
@@ -85,6 +86,7 @@ function MilestoneLadder({ variant }: { variant: "patient" | "physician" }) {
       withoutMedian: 72,
       withoutWindow: 6,
       maxShift: 8,
+      color: "#d14a6a",           // cancer — deep red/pink
     },
     {
       id: "ind",
@@ -94,6 +96,7 @@ function MilestoneLadder({ variant }: { variant: "patient" | "physician" }) {
       withoutMedian: 76,
       withoutWindow: 5,
       maxShift: 7,
+      color: "#e09b2d",           // functional — amber
     },
     {
       id: "gait",
@@ -103,6 +106,7 @@ function MilestoneLadder({ variant }: { variant: "patient" | "physician" }) {
       withoutMedian: 70,
       withoutWindow: 4,
       maxShift: 6,
+      color: "#6db1c9",           // motor — teal-blue
     },
   ];
 
@@ -125,12 +129,14 @@ function MilestoneLadder({ variant }: { variant: "patient" | "physician" }) {
     "Optimization · complete";
 
   const W = 640;
-  const H = 280;
+  const H = 300;
   const ageMin = 50, ageMax = 94;
   const leftPad = 76, rightPad = 24;
   const xOf = (age: number) => leftPad + ((age - ageMin) / (ageMax - ageMin)) * (W - leftPad - rightPad);
-  const y1 = 100, y2 = 180; // two parallel tracks
-  const bandHeight = 22;    // vertical thickness of percentile band
+  const y1 = 100, y2 = 200;       // two parallel tracks — wider gap for 4-lane stacking
+  const laneSpacing = 8;           // vertical spacing between milestone lanes within a track
+  const bandHeight = 11;           // vertical thickness of percentile band (smaller for stacking)
+  const laneYOffset = (i: number) => (i - 1.5) * laneSpacing; // -12, -4, +4, +12 for 4 items
 
   return (
     <div className="rounded-card border border-border bg-surface-panel p-6">
@@ -148,10 +154,22 @@ function MilestoneLadder({ variant }: { variant: "patient" | "physician" }) {
       <div className="mb-5 p-4 rounded-sm border border-border-subtle bg-white/[.012]">
         <div className="text-[13px] text-text-secondary leading-relaxed max-w-[82ch]">
           {variant === "patient"
-            ? <>These are statistical markers for <span className="font-medium text-text">people like you</span>, not a promise. The journey has two stages: <span className="font-medium text-text">Fundamentals</span> gets you most of the way — meds, screening, sleep, movement. <span className="font-medium text-text">Optimization</span> takes you the rest — biomarker tuning, precision dosing, recovery. Drag the slider through both stages to see what each delivers.</>
-            : <>Two-stage engagement model. Fundamentals (meds + screening + lifestyle floor) delivers ~65% of achievable shift; Optimization (biomarker tuning, precision dosing) delivers the remaining ~35%. Slider position encodes current stage of progression. Uncertainty band widens at low engagement. Adherence-conditional framing preserves consent documentation.</>
+            ? <>These are statistical markers for <span className="font-medium text-text">people like you</span>, not a promise. The journey has two stages: <span className="font-medium text-text">Fundamentals</span> gets you most of the way — meds, screening, sleep, movement. <span className="font-medium text-text">Optimization</span> adds further gains that some patients achieve with sustained precision care. Drag the slider through both stages to see what each delivers.</>
+            : <>Two-stage engagement model. Fundamentals (meds + screening + lifestyle floor) delivers ~65% of achievable shift; Optimization (biomarker tuning, precision dosing) adds the remaining ~35% in patients with sustained precision care. Slider position encodes current stage of progression. Uncertainty band widens at low engagement. Adherence-conditional framing preserves consent documentation.</>
           }
         </div>
+      </div>
+
+      {/* Domain legend */}
+      <div className="mb-4 flex items-center gap-5 flex-wrap text-[11px]">
+        {milestones.map((m) => (
+          <div key={m.id} className="flex items-center gap-2">
+            <div className="w-4 h-3 rounded-sm" style={{ background: m.color, opacity: 0.85 }} />
+            <span className="t-mono text-text-muted">
+              {variant === "patient" ? m.patient : m.physician.split(" · ")[0]}
+            </span>
+          </div>
+        ))}
       </div>
 
       <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} className="overflow-visible">
@@ -172,7 +190,7 @@ function MilestoneLadder({ variant }: { variant: "patient" | "physician" }) {
               fontFamily="'JetBrains Mono', monospace" textAnchor="end">
           Without
         </text>
-        <text x={leftPad - 10} y={y2 + 4} fill="#7170ff" fontSize="11"
+        <text x={leftPad - 10} y={y2 + 4} fill="#f7f8f8" fontSize="11"
               fontFamily="'JetBrains Mono', monospace" textAnchor="end">
           With Meridian
         </text>
@@ -184,72 +202,81 @@ function MilestoneLadder({ variant }: { variant: "patient" | "physician" }) {
               stroke="#35383e" strokeWidth="1" strokeDasharray="3 3" />
 
         {/* You are here marker */}
-        <line x1={xOf(47)} y1={y1 - 22} x2={xOf(47)} y2={y2 + 22}
+        <line x1={xOf(47)} y1={y1 - 30} x2={xOf(47)} y2={y2 + 30}
               stroke="#f7f8f8" strokeWidth="1" strokeDasharray="2 2" />
         <circle cx={xOf(47)} cy={y1} r="3" fill="#f7f8f8" />
         <circle cx={xOf(47)} cy={y2} r="3" fill="#f7f8f8" />
-        <text x={xOf(47)} y={y1 - 28} fill="#f7f8f8" fontSize="10"
+        <text x={xOf(47)} y={y1 - 36} fill="#f7f8f8" fontSize="10"
               fontFamily="'JetBrains Mono', monospace" textAnchor="middle">
           you · 47
         </text>
 
-        {/* Milestones on both tracks */}
+        {/* Milestones stacked by lane, colored by domain */}
         {milestones.map((m, i) => {
           const wMed = withMedian(m);
-          // Uncertainty band widens as engagement drops (less predictable)
           const withWindow = m.withoutWindow * (1 + (1 - progress / 100) * 0.4);
-          const laneOffset = (i % 2 === 0) ? -32 : 32;
+          const yLane1 = y1 + laneYOffset(i);
+          const yLane2 = y2 + laneYOffset(i);
 
           return (
             <g key={m.id}>
-              {/* Without-track uncertainty band */}
+              {/* Without-track band — hollow outline (no fill) */}
               <rect
                 x={xOf(m.withoutMedian - m.withoutWindow)}
-                y={y1 - bandHeight / 2}
+                y={yLane1 - bandHeight / 2}
                 width={xOf(m.withoutMedian + m.withoutWindow) - xOf(m.withoutMedian - m.withoutWindow)}
                 height={bandHeight}
-                fill="#e8604c"
-                fillOpacity="0.12"
-                stroke="#e8604c"
-                strokeOpacity="0.35"
-                strokeWidth="0.8"
+                fill={m.color}
+                fillOpacity="0.08"
+                stroke={m.color}
+                strokeOpacity="0.65"
+                strokeWidth="1"
                 rx="2"
               />
-              <line x1={xOf(m.withoutMedian)} y1={y1 - bandHeight / 2 - 2}
-                    x2={xOf(m.withoutMedian)} y2={y1 + bandHeight / 2 + 2}
-                    stroke="#e8604c" strokeWidth="1.6" />
-              <text x={xOf(m.withoutMedian)} y={y1 + laneOffset}
-                    fill="#e8604c" fontSize="10"
-                    fontFamily="'JetBrains Mono', monospace" textAnchor="middle">
-                {m.withoutMedian}
-              </text>
+              {/* Without median marker */}
+              <line x1={xOf(m.withoutMedian)} y1={yLane1 - bandHeight / 2 - 1}
+                    x2={xOf(m.withoutMedian)} y2={yLane1 + bandHeight / 2 + 1}
+                    stroke={m.color} strokeWidth="1.4" />
 
-              {/* With-Meridian band */}
+              {/* With-Meridian band — solid fill */}
               <rect
                 x={xOf(wMed - withWindow)}
-                y={y2 - bandHeight / 2}
+                y={yLane2 - bandHeight / 2}
                 width={xOf(wMed + withWindow) - xOf(wMed - withWindow)}
                 height={bandHeight}
-                fill="#7170ff"
-                fillOpacity="0.18"
-                stroke="#7170ff"
-                strokeOpacity="0.55"
-                strokeWidth="0.9"
+                fill={m.color}
+                fillOpacity="0.55"
+                stroke={m.color}
+                strokeOpacity="0.95"
+                strokeWidth="1"
                 rx="2"
               />
-              <line x1={xOf(wMed)} y1={y2 - bandHeight / 2 - 2}
-                    x2={xOf(wMed)} y2={y2 + bandHeight / 2 + 2}
-                    stroke="#7170ff" strokeWidth="1.8" />
-              <text x={xOf(wMed)} y={y2 + (laneOffset > 0 ? laneOffset - 12 : Math.abs(laneOffset) + 14)}
-                    fill="#828fff" fontSize="10"
-                    fontFamily="'JetBrains Mono', monospace" textAnchor="middle">
-                {wMed.toFixed(0)}
-              </text>
+              {/* With-Meridian median marker */}
+              <line x1={xOf(wMed)} y1={yLane2 - bandHeight / 2 - 1}
+                    x2={xOf(wMed)} y2={yLane2 + bandHeight / 2 + 1}
+                    stroke={m.color} strokeWidth="1.8" />
 
-              {/* Connecting line between paired medians */}
-              <line x1={xOf(m.withoutMedian)} y1={y1 + bandHeight / 2 + 2}
-                    x2={xOf(wMed)} y2={y2 - bandHeight / 2 - 2}
-                    stroke="#42464d" strokeWidth="0.6" strokeDasharray="2 2" />
+              {/* Connecting line between paired medians (same domain, vertical thread) */}
+              <line x1={xOf(m.withoutMedian)} y1={yLane1 + bandHeight / 2}
+                    x2={xOf(wMed)} y2={yLane2 - bandHeight / 2}
+                    stroke={m.color} strokeOpacity="0.3"
+                    strokeWidth="0.7" strokeDasharray="2 2" />
+
+              {/* Year labels — only on outer lanes to reduce clutter */}
+              {(i === 0 || i === 3) && (
+                <>
+                  <text x={xOf(m.withoutMedian)} y={i === 0 ? yLane1 - 14 : yLane1 + 24}
+                        fill={m.color} fillOpacity="0.85" fontSize="9"
+                        fontFamily="'JetBrains Mono', monospace" textAnchor="middle">
+                    {m.withoutMedian}
+                  </text>
+                  <text x={xOf(wMed)} y={i === 0 ? yLane2 - 14 : yLane2 + 24}
+                        fill={m.color} fontSize="9"
+                        fontFamily="'JetBrains Mono', monospace" textAnchor="middle">
+                    {wMed.toFixed(0)}
+                  </text>
+                </>
+              )}
             </g>
           );
         })}
@@ -317,14 +344,17 @@ function MilestoneLadder({ variant }: { variant: "patient" | "physician" }) {
           const s = shift(m);
           return (
             <div key={m.id} className="grid grid-cols-[1fr_auto_auto_auto] gap-4 items-baseline py-2 border-b border-border-subtle last:border-0">
-              <div>
-                <div className="text-[13px] text-text leading-snug">{label}</div>
-                <div className="t-mono text-text-subtle text-[10px] mt-0.5">{m.source}</div>
+              <div className="flex items-baseline gap-2 min-w-0">
+                <div className="w-2 h-2 rounded-sm shrink-0 translate-y-0.5" style={{ background: m.color, opacity: 0.85 }} />
+                <div className="min-w-0">
+                  <div className="text-[13px] text-text leading-snug">{label}</div>
+                  <div className="t-mono text-text-subtle text-[10px] mt-0.5">{m.source}</div>
+                </div>
               </div>
               <div className="t-mono text-text-muted text-[11px] tabular-nums text-right">
                 {m.withoutMedian - m.withoutWindow}–{m.withoutMedian + m.withoutWindow}
               </div>
-              <div className="t-mono text-accent-hover text-[11px] tabular-nums text-right">
+              <div className="t-mono text-[11px] tabular-nums text-right" style={{ color: m.color }}>
                 → {withMedian(m).toFixed(0)}
               </div>
               <div className="t-mono text-text-secondary text-[11px] tabular-nums min-w-[48px] text-right">
@@ -342,8 +372,8 @@ function MilestoneLadder({ variant }: { variant: "patient" | "physician" }) {
         </div>
         <div className="text-[11px] text-text-muted leading-relaxed max-w-[82ch]">
           {variant === "patient"
-            ? "Based on published research on large groups of people with backgrounds similar to yours. Ages shown are where half of that group reached the milestone. Real-life range for each person is wider than the band shown. This is not a prediction about you personally — it is the best honest estimate of what you are buying with the plan."
-            : "PREVENT (CVD events) · SEER (cancer incidence) · Framingham functional health cohort · Studenski gait-speed decline. Per-milestone uncertainty ±3–5 years at median adherence. Cohort-level inference; individual-level prediction not claimed. Adherence scaling assumes linear per-action response — non-linear responders (e.g., statin non-responders) require plan revision."
+            ? "Based on published research on large groups of people with backgrounds similar to yours. Ages shown are where half of that group reached the milestone. Real-life range for each person is wider than the band shown. This is not a prediction about you personally — it is the best honest estimate of what you are buying with the plan. The two-stage split (Fundamentals ≈65% of achievable shift, Optimization ≈35%) is a modeling convention informed by CTT Collaboration, PREDIMED, HOPE-3, and SPRINT — not a single published estimate."
+            : "PREVENT (CVD events) · SEER (cancer incidence) · Framingham functional health cohort · Studenski gait-speed decline. Per-milestone uncertainty ±3–5 years at median adherence. Cohort-level inference; individual-level prediction not claimed. Two-stage split (Fundamentals 65% / Optimization 35%) is a modeling convention synthesized from CTT, PREDIMED, HOPE-3, SPRINT — not a single published estimate. Optimization category scoped to evidence-backed interventions (ApoB titration, time-in-range glucose mgmt); vague precision-recovery claims excluded."
           }
         </div>
       </div>
