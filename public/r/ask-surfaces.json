@@ -1,0 +1,33 @@
+{
+  "name": "ask-surfaces",
+  "type": "registry:component",
+  "title": "Ask surfaces",
+  "description": "Contextual AI surfaces: inline popover, right-edge pane, command entry, launcher.",
+  "dependencies": [
+    "react",
+    "@radix-ui/react-dialog"
+  ],
+  "registryDependencies": [
+    "dialog",
+    "button",
+    "input"
+  ],
+  "files": [
+    "src/primitives/Ask"
+  ],
+  "importPath": "@/primitives/Ask",
+  "tokenDependencies": [
+    "border.subtle",
+    "border.base",
+    "text.primary",
+    "text.secondary",
+    "text.muted"
+  ],
+  "forbiddenPatterns": [
+    "three-ai-surfaces",
+    "ai-without-source",
+    "ai-accent-chrome",
+    "ai-pane-overlay"
+  ],
+  "prompt": "Use the Meridian MD design system. Import Ask surfaces from @/primitives/Ask. Add contextual AI help with Inline and right-edge push pane only. Every assistant answer needs a source line. Do not add a floating chatbot, third panel, or accent-colored inline trigger."
+}

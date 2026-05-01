@@ -22,6 +22,14 @@
     "visualReference": "http://localhost:8088",
     "theme": "linear-dark",
     "density": "comfortable",
-    "voice": "physician"
+    "voice": "physician",
+    "registryRef": "public/registry.json",
+    "agentInterface": "docs/agent-interface.md",
+    "figmaMcpContract": "docs/agent-interface.md#figma-mcp-contract",
+    "registryItems": [
+      "decision-card",
+      "domain-pane",
+      "ask-surfaces"
+    ]
   }
 }

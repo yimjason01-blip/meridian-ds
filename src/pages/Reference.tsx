@@ -34,12 +34,13 @@ export default function Reference() {
         <PrimitivesSection />
         <ReorderableCardSection />
         <AskSection />
+        <AgentReadinessSection />
         <StateMatrixSection />
         <BannedPatternsSection />
         <ClinicalSection />
       </main>
       <footer className="max-w-[1200px] mx-auto px-6 py-10 border-t border-border-subtle mt-16">
-        <div className="t-meta">Meridian MD DS v1.4.2 · Locked 2026-04-18 · tokens.json is source of truth</div>
+        <div className="t-meta">Meridian MD DS v1.5.0 · Locked 2026-05-01 · tokens.json plus registry.json are source of truth</div>
       </footer>
     </div>
   );
@@ -74,7 +75,7 @@ function Header() {
           </span>
           <span className="t-ui text-text-muted ml-3">Design System</span>
         </div>
-        <span className="t-meta">v1.4.2 · dark-only · Linear-native · shadcn/Radix primitives</span>
+        <span className="t-meta">v1.5.0 · dark-only · Linear-native · shadcn/Radix primitives · agent-ready registry</span>
       </div>
     </header>
   );
@@ -494,11 +495,65 @@ function PrimitivesSection() {
   );
 }
 
+// ───── Agent readiness ───────────────────────────────────────────────────
+
+function AgentReadinessSection() {
+  const registryItems = [
+    { name: "DecisionCard", path: "@/clinical/DecisionCard", use: "Care Plan actions", prompt: "Do / Why / Goal. Evidence footer only." },
+    { name: "DomainPane", path: "@/clinical/DomainPane", use: "Risk domain review", prompt: "Named model, ranked drivers, care-plan handoff." },
+    { name: "Ask surfaces", path: "@/primitives/Ask", use: "Contextual AI help", prompt: "Inline plus right-edge pane. Source line required." },
+  ];
+
+  return (
+    <Section n="11" title="Agent-Ready Registry" rule="The DS is now machine-applicable: registry entries, Figma MCP naming, and reproduction prompts travel with the components. Agents should import, not recreate.">
+      <div className="grid grid-cols-3 gap-3">
+        {registryItems.map((item) => (
+          <Card key={item.name}>
+            <CardHeader>{item.name}</CardHeader>
+            <div className="space-y-3">
+              <div>
+                <div className="t-label mb-1">Use</div>
+                <div className="t-ui text-text-secondary">{item.use}</div>
+              </div>
+              <div>
+                <div className="t-label mb-1">Import</div>
+                <code className="t-mono text-text-secondary">{item.path}</code>
+              </div>
+              <div>
+                <div className="t-label mb-1">Prompt lock</div>
+                <div className="t-caption text-text-secondary">{item.prompt}</div>
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+      <div className="mt-4 grid grid-cols-2 gap-4">
+        <Card>
+          <CardHeader>Registry files</CardHeader>
+          <div className="space-y-2 t-ui text-text-secondary">
+            <div><code className="t-mono">/registry.json</code> lists installable Meridian items.</div>
+            <div><code className="t-mono">/r/decision-card.json</code> carries component contract plus prompt.</div>
+            <div><code className="t-mono">docs/agent-interface.md</code> is the coding-agent front matter.</div>
+          </div>
+        </Card>
+        <Card>
+          <CardHeader>Figma MCP naming</CardHeader>
+          <div className="space-y-2 t-ui text-text-secondary">
+            <div><code className="t-mono">ComponentName / variant / state</code></div>
+            <div>Code name, Figma name, and registry item must match.</div>
+            <div>Annotations must include intent, data source, state, token dependencies, and banned patterns.</div>
+          </div>
+        </Card>
+      </div>
+    </Section>
+  );
+}
+
 // ───── State matrix ──────────────────────────────────────────────────────
 
 function StateMatrixSection() {
   return (
-    <Section n="11" title="Component States" rule="Every interactive component must handle default / hover / focus / active / disabled / loading / empty / error. Empty and loading are the most skipped.">
+    <Section n="12" title="Component States" rule="Every interactive component must handle default / hover / focus / active / disabled / loading / empty / error. Empty and loading are the most skipped.">
       <div className="grid grid-cols-3 gap-3">
         <StateDemo label="Default"><Button variant="primary">Sign order</Button></StateDemo>
         <StateDemo label="Hover (simulated)"><Button variant="primary" className="bg-accent-hover">Sign order</Button></StateDemo>
@@ -556,7 +611,7 @@ function SegmentedControlDemo() {
 
 function BannedPatternsSection() {
   return (
-    <Section n="12" title="Banned Patterns" rule="Enforced by tests where possible, by code review otherwise. AI agents must read this list from tokens.json › banned_patterns before generating.">
+    <Section n="13" title="Banned Patterns" rule="Enforced by tests where possible, by code review otherwise. AI agents must read this list from tokens.json › banned_patterns before generating.">
       <ul className="space-y-2">
         {tokens.banned_patterns.map((p) => (
           <li key={p.id} className="flex gap-3 items-start rounded-card border border-border-subtle p-3">
@@ -576,7 +631,7 @@ function BannedPatternsSection() {
 
 function ClinicalSection() {
   return (
-    <Section n="13" title="Clinical Components" rule="Meridian-native. The 30% no off-the-shelf system ships. Each encodes a skill: PatientBanner, Flowsheet, DomainPane, DecisionCard.">
+    <Section n="14" title="Clinical Components" rule="Meridian-native. The 30% no off-the-shelf system ships. Each encodes a skill: PatientBanner, Flowsheet, DomainPane, DecisionCard.">
       <div className="space-y-8">
         <div>
           <div className="t-label mb-2">PatientBanner</div>

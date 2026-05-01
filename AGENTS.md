@@ -11,11 +11,13 @@
 
 ## Source of truth
 
-1. **`src/tokens/tokens.json`** — DTCG tokens + `pairings` matrix + `banned_patterns`. Machine-readable. Never hardcode hex.
-2. **`src/primitives/*`** — Button, Card, Tabs, Table, Badge, Input, Dialog, DropdownMenu. Use these. Do not re-create.
-3. **`src/clinical/*`** — PatientBanner, Flowsheet, DomainPane, **DecisionCard** (Care Plan action card: Do / Why / Goal — do NOT recreate the SOAP 6-field template). Clinical primitives. Extend, do not fork.
-4. **`DESIGN_SYSTEM.md`** (in `../design-system/`) — the written rules. Human canonical reference.
-5. **`http://localhost:8088`** — visual reference. Every rule rendered live.
+1. **`src/tokens/tokens.json`** — DTCG tokens + `pairings` matrix + `banned_patterns` + `agent_contract`. Machine-readable. Never hardcode hex.
+2. **`public/registry.json`** — installable component contracts for AI agents and shadcn-style registry flows.
+3. **`docs/agent-interface.md`** — reproduction prompts and Figma MCP naming contract.
+4. **`src/primitives/*`** — Button, Card, Tabs, Table, Badge, Input, Dialog, DropdownMenu. Use these. Do not re-create.
+5. **`src/clinical/*`** — PatientBanner, Flowsheet, DomainPane, **DecisionCard** (Care Plan action card: Do / Why / Goal — do NOT recreate the SOAP 6-field template). Clinical primitives. Extend, do not fork.
+6. **`DESIGN_SYSTEM.md`** (in `../design-system/`) — the written rules. Human canonical reference.
+7. **`http://localhost:8088`** — visual reference. Every rule rendered live.
 
 ## Hard rules (banned_patterns — auto-reject)
 
@@ -50,8 +52,9 @@ From `tokens.json › banned_patterns`:
 ## For generative tools specifically
 
 - **Tell the model:** "Use the Meridian design system. Import from `src/primitives` and `src/clinical`. Never hardcode colors. Respect `banned_patterns` in `tokens.json`."
-- **Provide the model** with this file, `tokens.json`, and a good/bad exemplar pair if available.
-- **Reject output** that uses hex values, inline styles for color, or any banned pattern.
+- **Provide the model** with this file, `tokens.json`, `docs/agent-interface.md`, and `public/registry.json`.
+- **Prefer registry items** for Meridian-specific components: `decision-card`, `domain-pane`, and `ask-surfaces`.
+- **Reject output** that uses hex values, inline styles for color, recreates registered components, or any banned pattern.
 
 ## What this is NOT
 

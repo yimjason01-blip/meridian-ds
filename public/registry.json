@@ -1,0 +1,109 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry.json",
+  "name": "meridian-ds",
+  "homepage": "https://yimjason01-blip.github.io/meridian-ds/",
+  "version": "1.5.0",
+  "description": "Meridian MD design system registry. Clinical Restrained, dark-only, Linear-native, AI-agent ready.",
+  "tokens": "src/tokens/tokens.json",
+  "agentContext": [
+    "AGENTS.md",
+    "docs/agent-interface.md"
+  ],
+  "items": [
+    {
+      "name": "decision-card",
+      "type": "registry:component",
+      "title": "DecisionCard",
+      "description": "Care Plan action card with Do, Why, Goal answer shape.",
+      "dependencies": [
+        "react"
+      ],
+      "registryDependencies": [
+        "card",
+        "badge"
+      ],
+      "files": [
+        "src/clinical/DecisionCard.tsx"
+      ],
+      "importPath": "@/clinical/DecisionCard",
+      "tokenDependencies": [
+        "surface.panel",
+        "surface.card",
+        "text.primary",
+        "text.secondary",
+        "status.crit"
+      ],
+      "forbiddenPatterns": [
+        "soap-field-template",
+        "promoted-evidence",
+        "decorative-accent",
+        "muted-on-nested-card"
+      ],
+      "prompt": "Use the Meridian MD design system. Import DecisionCard from @/clinical/DecisionCard. Create care plan actions with Do, Why, Goal shape. Evidence is a single-line footer. Do not use SOAP fields, decorative accent, or muted text on card surfaces."
+    },
+    {
+      "name": "domain-pane",
+      "type": "registry:component",
+      "title": "DomainPane",
+      "description": "Risk domain pane with model output, ranked drivers, evidence, and care plan handoff.",
+      "dependencies": [
+        "react"
+      ],
+      "registryDependencies": [
+        "card",
+        "button",
+        "badge"
+      ],
+      "files": [
+        "src/clinical/DomainPane.tsx"
+      ],
+      "importPath": "@/clinical/DomainPane",
+      "tokenDependencies": [
+        "surface.panel",
+        "surface.card",
+        "surface.hover",
+        "text.primary",
+        "text.secondary"
+      ],
+      "forbiddenPatterns": [
+        "patient-marketing-voice",
+        "decorative-accent",
+        "missing-agent-context"
+      ],
+      "prompt": "Use the Meridian MD design system. Import DomainPane from @/clinical/DomainPane. Build a physician risk-domain pane with named model output, ranked drivers, evidence footer, and care plan entry point. Do not use patient marketing voice or decorative color."
+    },
+    {
+      "name": "ask-surfaces",
+      "type": "registry:component",
+      "title": "Ask surfaces",
+      "description": "Contextual AI surfaces: inline popover, right-edge pane, command entry, launcher.",
+      "dependencies": [
+        "react",
+        "@radix-ui/react-dialog"
+      ],
+      "registryDependencies": [
+        "dialog",
+        "button",
+        "input"
+      ],
+      "files": [
+        "src/primitives/Ask"
+      ],
+      "importPath": "@/primitives/Ask",
+      "tokenDependencies": [
+        "border.subtle",
+        "border.base",
+        "text.primary",
+        "text.secondary",
+        "text.muted"
+      ],
+      "forbiddenPatterns": [
+        "three-ai-surfaces",
+        "ai-without-source",
+        "ai-accent-chrome",
+        "ai-pane-overlay"
+      ],
+      "prompt": "Use the Meridian MD design system. Import Ask surfaces from @/primitives/Ask. Add contextual AI help with Inline and right-edge push pane only. Every assistant answer needs a source line. Do not add a floating chatbot, third panel, or accent-colored inline trigger."
+    }
+  ]
+}
