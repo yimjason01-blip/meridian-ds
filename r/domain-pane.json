@@ -1,0 +1,31 @@
+{
+  "name": "domain-pane",
+  "type": "registry:component",
+  "title": "DomainPane",
+  "description": "Risk domain pane with model output, ranked drivers, evidence, and care plan handoff.",
+  "dependencies": [
+    "react"
+  ],
+  "registryDependencies": [
+    "card",
+    "button",
+    "badge"
+  ],
+  "files": [
+    "src/clinical/DomainPane.tsx"
+  ],
+  "importPath": "@/clinical/DomainPane",
+  "tokenDependencies": [
+    "surface.panel",
+    "surface.card",
+    "surface.hover",
+    "text.primary",
+    "text.secondary"
+  ],
+  "forbiddenPatterns": [
+    "patient-marketing-voice",
+    "decorative-accent",
+    "missing-agent-context"
+  ],
+  "prompt": "Use the Meridian MD design system. Import DomainPane from @/clinical/DomainPane. Build a physician risk-domain pane with named model output, ranked drivers, evidence footer, and care plan entry point. Do not use patient marketing voice or decorative color."
+}

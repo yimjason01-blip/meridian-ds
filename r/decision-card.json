@@ -1,0 +1,31 @@
+{
+  "name": "decision-card",
+  "type": "registry:component",
+  "title": "DecisionCard",
+  "description": "Care Plan action card with Do, Why, Goal answer shape.",
+  "dependencies": [
+    "react"
+  ],
+  "registryDependencies": [
+    "card",
+    "badge"
+  ],
+  "files": [
+    "src/clinical/DecisionCard.tsx"
+  ],
+  "importPath": "@/clinical/DecisionCard",
+  "tokenDependencies": [
+    "surface.panel",
+    "surface.card",
+    "text.primary",
+    "text.secondary",
+    "status.crit"
+  ],
+  "forbiddenPatterns": [
+    "soap-field-template",
+    "promoted-evidence",
+    "decorative-accent",
+    "muted-on-nested-card"
+  ],
+  "prompt": "Use the Meridian MD design system. Import DecisionCard from @/clinical/DecisionCard. Create care plan actions with Do, Why, Goal shape. Evidence is a single-line footer. Do not use SOAP fields, decorative accent, or muted text on card surfaces."
+}
